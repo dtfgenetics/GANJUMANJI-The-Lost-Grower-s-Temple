@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#07140d" />
+    <meta name="description" content="Explore the original 3D Temple Atrium vertical slice for Ganjumanji: The Lost Grower's Temple." />
+    <title>Ganjumanji: The Lost Grower's Temple</title>
+  </head>
+  <body>
+    <div id="app" class="game-shell" data-phase="playing" data-player-x="0" data-player-z="8">
+      <div id="scene" class="scene" aria-label="3D Temple Atrium playfield"></div>
+      <header class="hud" aria-live="polite">
+        <div class="brand-chip">
+          <span>GANJUMANJI</span>
+          <strong>The Lost Grower's Temple</strong>
+        </div>
+        <div class="objective-chip">
+          <span>Objective</span>
+          <strong id="objective">Recover the three Seed Sigils.</strong>
+        </div>
+        <div class="status-strip">
+          <span>Sigils <strong id="sigil-count">0 / 3</strong></span>
+          <span>Resolve <strong id="resolve-count">3</strong></span>
+        </div>
+      </header>
+      <div id="prompt" class="prompt" role="status">WASD / arrows to move · Shift to sprint · R to restart</div>
+      <div class="touch-controls" aria-label="Touch movement controls">
+        <div class="dpad">
+          <button type="button" data-action="forward" aria-label="Move forward">▲</button>
+          <button type="button" data-action="left" aria-label="Move left">◀</button>
+          <button type="button" data-action="back" aria-label="Move backward">▼</button>
+          <button type="button" data-action="right" aria-label="Move right">▶</button>
+        </div>
+        <div class="touch-actions">
+          <button type="button" data-action="sprint">Sprint</button>
+          <button type="button" data-action="restart">Restart</button>
+        </div>
+      </div>
+      <dialog id="win-dialog" class="win-dialog">
+        <p class="eyebrow">Temple Atrium cleared</p>
+        <h1>The Canopy Gate is open.</h1>
+        <p>You recovered all three Seed Sigils and escaped the atrium.</p>
+        <button id="play-again" type="button">Run it again</button>
+      </dialog>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
