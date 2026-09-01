@@ -1,7 +1,7 @@
 import './style.css';
 import { InputController } from './input';
 import { TempleWorldRenderer } from './render/world';
-import { createInitialState, restartGame, stepGame, type GameState } from './simulation/state';
+import { createInitialState, restartGame, stepGame, type GameEvent, type GameState } from './simulation/state';
 import { TempleHud } from './ui/hud';
 
 const root = document.querySelector<HTMLElement>('#app');
@@ -43,7 +43,7 @@ function frame(now: number) {
 
   if (input.consumeRestart()) resetRun();
 
-  const events = [];
+  const events: GameEvent[] = [];
   while (accumulator >= FIXED_STEP) {
     const result = stepGame(state, input.snapshot(), FIXED_STEP);
     state = result.state;
@@ -65,11 +65,12 @@ window.addEventListener('pagehide', () => {
 }, { once: true });
 
 function escapeHtml(value: string) {
-  return value.replace(/[&<>'"]/g, (character) => ({
+  const entities: Record<string, string> = {
     '&': '&amp;',
     '<': '&lt;',
     '>': '&gt;',
     "'": '&#39;',
     '"': '&quot;',
-  })[character] ?? character);
+  };
+  return value.replace(/[&<>'"]/g, (character) => entities[character] ?? character);
 }
