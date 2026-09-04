@@ -90,7 +90,7 @@ export const REGIONS: Record<RegionId, RegionDefinition> = {
       ...border(11, 9),
       { x: 3, y: 1 }, { x: 3, y: 2 }, { x: 3, y: 3 },
       { x: 7, y: 5 }, { x: 7, y: 6 }, { x: 7, y: 7 },
-      { x: 4, y: 4 }, { x: 5, y: 4 }, { x: 6, y: 4 },
+      { x: 4, y: 4 }, { x: 5, y: 4 },
       { x: 8, y: 2 }
     ],
     palette: { floorA: 0x4a3325, floorB: 0x3e291f, wall: 0x241912, accent: 0xe8c766 }
