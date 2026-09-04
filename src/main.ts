@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import './styles.css';
-import { createGame, move, tileKind, type Direction, type TempleState } from './game/model';
+import { createGame, move, tileKind, type TempleState } from './game/model';
+import { actionFromKeyboard, actionFromMoveControl, type GameAction } from './game/input';
+import { clearExpedition, loadExpedition, saveExpedition } from './game/storage';
 
 const TILE = 64;
 let state: TempleState = createGame();
@@ -12,6 +14,13 @@ const danger = document.querySelector('#danger') as HTMLElement;
 const turns = document.querySelector('#turns') as HTMLElement;
 const message = document.querySelector('#message') as HTMLElement;
 const restartButton = document.querySelector('#restartButton') as HTMLButtonElement;
+const saveButton = document.querySelector('#saveButton') as HTMLButtonElement;
+const continueButton = document.querySelector('#continueButton') as HTMLButtonElement;
+const saveStatus = document.querySelector('#saveStatus') as HTMLElement;
+
+function getStorage(): Storage | null {
+  try { return globalThis.localStorage ?? null; } catch { return null; }
+}
 
 function syncHud() {
   health.textContent = String(state.health);
@@ -20,21 +29,57 @@ function syncHud() {
   turns.textContent = String(state.turn);
   message.textContent = state.message;
   restartButton.textContent = state.status === 'playing' ? 'Restart Expedition' : 'Play Again';
+  continueButton.disabled = !loadExpedition(getStorage());
 }
 
-function dispatchMove(direction: Direction) {
-  if (state.status !== 'playing') return;
-  state = move(state, direction);
+function renderState() {
   syncHud();
   sceneRef?.renderState(state);
+}
+
+function persistState(label = 'Expedition saved') {
+  const saved = saveExpedition(getStorage(), state);
+  saveStatus.textContent = saved ? label : 'Save unavailable in this browser';
+  continueButton.disabled = !saved;
+}
+
+function restartGame() {
+  state = createGame();
+  clearExpedition(getStorage());
+  saveStatus.textContent = 'Fresh expedition';
+  renderState();
+}
+
+function continueGame() {
+  const loaded = loadExpedition(getStorage());
+  if (!loaded) {
+    saveStatus.textContent = 'No saved expedition found';
+    continueButton.disabled = true;
+    return;
+  }
+  state = loaded;
+  state.message = 'Saved expedition restored.';
+  saveStatus.textContent = 'Save restored';
+  renderState();
+}
+
+function dispatch(action: GameAction | null) {
+  if (!action) return;
+  if (action.type === 'restart') {
+    restartGame();
+    return;
+  }
+  if (state.status !== 'playing') return;
+  const previousTurn = state.turn;
+  state = move(state, action.direction);
+  if (state.turn !== previousTurn) persistState('Checkpoint saved');
+  renderState();
 }
 
 class TempleScene extends Phaser.Scene {
   private graphics!: Phaser.GameObjects.Graphics;
   private player!: Phaser.GameObjects.Arc;
   private statusText!: Phaser.GameObjects.Text;
-  private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
-  private wasd!: Record<'W' | 'A' | 'S' | 'D', Phaser.Input.Keyboard.Key>;
 
   constructor() { super('temple'); }
 
@@ -42,23 +87,12 @@ class TempleScene extends Phaser.Scene {
     sceneRef = this;
     this.graphics = this.add.graphics();
     this.player = this.add.circle(0, 0, TILE * .26, 0xf5df8e).setStrokeStyle(4, 0x1f472c);
-    this.statusText = this.add.text(14, 12, '', { fontFamily: 'system-ui, sans-serif', fontSize: '20px', fontStyle: 'bold', color: '#fff5cf', backgroundColor: '#07110bcc', padding: { x: 10, y: 6 } }).setDepth(5);
-    this.cursors = this.input.keyboard!.createCursorKeys();
-    this.wasd = this.input.keyboard!.addKeys('W,A,S,D') as Record<'W' | 'A' | 'S' | 'D', Phaser.Input.Keyboard.Key>;
-    this.input.keyboard?.on('keydown', (event: KeyboardEvent) => {
-      if (event.repeat) return;
-      const key = event.key.toLowerCase();
-      if (key === 'arrowup' || key === 'w') dispatchMove('up');
-      if (key === 'arrowdown' || key === 's') dispatchMove('down');
-      if (key === 'arrowleft' || key === 'a') dispatchMove('left');
-      if (key === 'arrowright' || key === 'd') dispatchMove('right');
-    });
+    this.statusText = this.add.text(14, 12, '', {
+      fontFamily: 'system-ui, sans-serif', fontSize: '20px', fontStyle: 'bold',
+      color: '#fff5cf', backgroundColor: '#07110bcc', padding: { x: 10, y: 6 }
+    }).setDepth(5);
+    this.input.keyboard?.on('keydown', (event: KeyboardEvent) => dispatch(actionFromKeyboard(event)));
     this.renderState(state);
-  }
-
-  update() {
-    void this.cursors;
-    void this.wasd;
   }
 
   renderState(next: TempleState) {
@@ -98,14 +132,12 @@ new Phaser.Game({
   scene: TempleScene
 });
 
-restartButton.addEventListener('click', () => {
-  state = createGame();
-  syncHud();
-  sceneRef?.renderState(state);
-});
+restartButton.addEventListener('click', restartGame);
+saveButton.addEventListener('click', () => persistState());
+continueButton.addEventListener('click', continueGame);
 
 document.querySelectorAll<HTMLButtonElement>('[data-move]').forEach((button) => {
-  button.addEventListener('click', () => dispatchMove(button.dataset.move as Direction));
+  button.addEventListener('click', () => dispatch(actionFromMoveControl(button.dataset.move)));
 });
 
 syncHud();
