@@ -75,6 +75,29 @@ describe('Ganjumanji temple model', () => {
     expect(revisit.visitedCheckpoints).toHaveLength(1);
   });
 
+  it('scales temple surge pressure by region without changing save state shape', () => {
+    const root = createGame();
+    root.player = { x: 1, y: 7 };
+    root.regionTurn = 8;
+    expect(move(root, 'right').health).toBe(2);
+
+    const archive = createGame();
+    archive.regionId = 'sunken_archive';
+    archive.player = { x: 1, y: 7 };
+    archive.regionTurn = 6;
+    const archiveSurge = move(archive, 'right');
+    expect(archiveSurge.health).toBe(2);
+    expect(archiveSurge.message).toMatch(/sunken archive surges/i);
+
+    const vault = createGame();
+    vault.regionId = 'vault_heart';
+    vault.player = { x: 1, y: 7 };
+    vault.regionTurn = 4;
+    const vaultSurge = move(vault, 'right');
+    expect(vaultSurge.health).toBe(2);
+    expect(vaultSurge.message).toMatch(/vault heart surges/i);
+  });
+
   it('keeps a region passage locked until its relic seeds are recovered', () => {
     const state = createGame();
     state.player = { x: 9, y: 2 };
@@ -98,6 +121,7 @@ describe('Ganjumanji temple model', () => {
     expect(transitioned.relicGoal).toBe(2);
     expect(transitioned.campaignCollected).toBe(3);
     expect(transitioned.regionTurn).toBe(0);
+    expect(transitioned.message).toMatch(/surge every 7 moves/i);
   });
 
   it('wins only after the final Vault Heart relic and exit are secured', () => {
