@@ -154,19 +154,46 @@ class TempleScene extends Phaser.Scene {
   private graphics!: Phaser.GameObjects.Graphics;
   private player!: Phaser.GameObjects.Arc;
   private statusText!: Phaser.GameObjects.Text;
+  private lastRegionId: RegionId | null = null;
+  private lastPlayer: { x: number; y: number } | null = null;
+  private reducedMotion = false;
 
   constructor() { super('temple'); }
 
   create() {
     sceneRef = this;
+    this.reducedMotion = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
     this.graphics = this.add.graphics();
-    this.player = this.add.circle(0, 0, TILE * .26, 0xf5df8e).setStrokeStyle(4, 0x1f472c);
+    this.player = this.add.circle(0, 0, TILE * .26, 0xf5df8e).setStrokeStyle(4, 0x1f472c).setDepth(4);
     this.statusText = this.add.text(14, 12, '', {
       fontFamily: 'system-ui, sans-serif', fontSize: '20px', fontStyle: 'bold',
       color: '#fff5cf', backgroundColor: '#07110bcc', padding: { x: 10, y: 6 }
     }).setDepth(5);
     this.input.keyboard?.on('keydown', (event: KeyboardEvent) => dispatch(actionFromKeyboard(event)));
     this.renderState(state);
+  }
+
+  private positionPlayer(next: TempleState) {
+    const x = next.player.x * TILE + TILE / 2;
+    const y = next.player.y * TILE + TILE / 2;
+    const changedRegion = this.lastRegionId !== null && this.lastRegionId !== next.regionId;
+    const moved = this.lastPlayer !== null && (this.lastPlayer.x !== next.player.x || this.lastPlayer.y !== next.player.y);
+    this.tweens.killTweensOf(this.player);
+
+    if (!this.reducedMotion && moved && !changedRegion) {
+      this.tweens.add({ targets: this.player, x, y, duration: 120, ease: 'Sine.Out' });
+    } else {
+      this.player.setPosition(x, y);
+    }
+
+    if (!this.reducedMotion && changedRegion) {
+      this.cameras.main.flash(220, 232, 199, 102, false);
+      this.player.setAlpha(0.2).setScale(0.72);
+      this.tweens.add({ targets: this.player, alpha: 1, scale: 1, duration: 220, ease: 'Back.Out' });
+    }
+
+    this.lastRegionId = next.regionId;
+    this.lastPlayer = { ...next.player };
   }
 
   renderState(next: TempleState) {
@@ -198,7 +225,7 @@ class TempleScene extends Phaser.Scene {
       }
     }
 
-    this.player.setPosition(next.player.x * TILE + TILE / 2, next.player.y * TILE + TILE / 2);
+    this.positionPlayer(next);
     this.statusText.setText(next.status === 'won' ? 'LIVING SEED VAULT RECOVERED' : next.status === 'lost' ? 'EXPEDITION LOST' : `${region.name.toUpperCase()} · RELICS ${next.collected}/${next.relicGoal} · WARDS ${next.wards}`);
   }
 }
