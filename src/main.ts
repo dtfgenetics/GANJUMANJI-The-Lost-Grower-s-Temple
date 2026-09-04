@@ -14,6 +14,7 @@ let sceneRef: TempleScene | null = null;
 const health = document.querySelector('#health') as HTMLElement;
 const relics = document.querySelector('#relics') as HTMLElement;
 const wards = document.querySelector('#wards') as HTMLElement;
+const tools = document.querySelector('#tools') as HTMLElement;
 const regions = document.querySelector('#regions') as HTMLElement;
 const checkpoints = document.querySelector('#checkpoints') as HTMLElement;
 const danger = document.querySelector('#danger') as HTMLElement;
@@ -22,6 +23,7 @@ const regionName = document.querySelector('#regionName') as HTMLElement;
 const regionRelics = document.querySelector('#regionRelics') as HTMLElement;
 const regionTitle = document.querySelector('#regionTitle') as HTMLElement;
 const regionDescription = document.querySelector('#regionDescription') as HTMLElement;
+const pressureHint = document.querySelector('#pressureHint') as HTMLElement;
 const message = document.querySelector('#message') as HTMLElement;
 const audioButton = document.querySelector('#audioButton') as HTMLButtonElement;
 const restartButton = document.querySelector('#restartButton') as HTMLButtonElement;
@@ -78,6 +80,7 @@ function syncHud() {
   health.textContent = `${state.health} / ${state.maxHealth}`;
   relics.textContent = `${state.campaignCollected} / ${state.campaignRelicGoal}`;
   wards.textContent = String(state.wards);
+  tools.textContent = String(state.tools);
   regions.textContent = `${state.regionsCleared.length} / 3`;
   checkpoints.textContent = `${state.visitedCheckpoints.length} / ${state.checkpoints.length}`;
   danger.textContent = `${state.danger} / 10`;
@@ -86,8 +89,9 @@ function syncHud() {
   regionRelics.textContent = `${state.collected} / ${state.relicGoal}`;
   regionTitle.textContent = region.name;
   regionDescription.textContent = region.subtitle;
+  pressureHint.textContent = region.pressureLabel;
   message.textContent = state.message;
-  restartButton.textContent = state.status === 'playing' ? 'Restart Expedition' : 'Play Again';
+  restartButton.textContent = state.status === 'playing' ? 'Restart' : 'Play Again';
   saveButton.disabled = state.status !== 'playing';
   continueButton.disabled = !loadExpedition(getStorage());
   document.querySelectorAll<HTMLElement>('[data-region-step]').forEach((step) => {
@@ -148,7 +152,7 @@ function finishRun(previousStatus: TempleState['status']) {
 function cueForMove(previous: TempleState, next: TempleState): AudioCue {
   if (previous.regionId !== next.regionId) return 'region';
   if (next.campaignCollected > previous.campaignCollected) return 'relic';
-  if (next.wards > previous.wards) return 'ward';
+  if (next.wards > previous.wards || next.tools > previous.tools) return 'ward';
   if (next.visitedCheckpoints.length > previous.visitedCheckpoints.length) return 'checkpoint';
   if (next.health < previous.health || next.wards < previous.wards) return 'damage';
   return 'move';
@@ -156,10 +160,7 @@ function cueForMove(previous: TempleState, next: TempleState): AudioCue {
 
 function dispatch(action: GameAction | null) {
   if (!action) return;
-  if (action.type === 'restart') {
-    restartGame();
-    return;
-  }
+  if (action.type === 'restart') { restartGame(); return; }
   if (state.status !== 'playing') return;
   const previous = structuredClone(state) as TempleState;
   const previousTurn = state.turn;
@@ -167,9 +168,7 @@ function dispatch(action: GameAction | null) {
   const previousStatus = state.status;
   state = move(state, action.direction);
   if (state.turn !== previousTurn) audio.play(cueForMove(previous, state));
-  if (state.turn !== previousTurn && state.status === 'playing') {
-    persistState(previousRegion !== state.regionId ? 'Region checkpoint saved' : 'Checkpoint saved');
-  }
+  if (state.turn !== previousTurn && state.status === 'playing') persistState(previousRegion !== state.regionId ? 'Region checkpoint saved' : 'Checkpoint saved');
   finishRun(previousStatus);
   renderState();
 }
@@ -229,19 +228,13 @@ class TempleScene extends Phaser.Scene {
     const changedRegion = this.lastRegionId !== null && this.lastRegionId !== next.regionId;
     const moved = this.lastPlayer !== null && (this.lastPlayer.x !== next.player.x || this.lastPlayer.y !== next.player.y);
     this.tweens.killTweensOf(this.player);
-
-    if (!this.reducedMotion && moved && !changedRegion) {
-      this.tweens.add({ targets: this.player, x, y, duration: 120, ease: 'Sine.Out' });
-    } else {
-      this.player.setPosition(x, y);
-    }
-
+    if (!this.reducedMotion && moved && !changedRegion) this.tweens.add({ targets: this.player, x, y, duration: 120, ease: 'Sine.Out' });
+    else this.player.setPosition(x, y);
     if (!this.reducedMotion && changedRegion) {
       this.cameras.main.flash(220, 232, 199, 102, false);
       this.player.setAlpha(0.2).setScale(0.72);
       this.tweens.add({ targets: this.player, alpha: 1, scale: 1, duration: 220, ease: 'Back.Out' });
     }
-
     this.lastRegionId = next.regionId;
     this.lastPlayer = { ...next.player };
   }
@@ -255,20 +248,31 @@ class TempleScene extends Phaser.Scene {
       for (let x = 0; x < next.width; x += 1) {
         const kind = tileKind(next, { x, y });
         const fill = kind === 'wall' ? region.palette.wall : ((x + y) % 2 ? region.palette.floorA : region.palette.floorB);
+        const cx = x * TILE + TILE / 2;
+        const cy = y * TILE + TILE / 2;
         this.graphics.fillStyle(fill, 1).fillRect(x * TILE, y * TILE, TILE - 2, TILE - 2);
         if (kind === 'floor') this.drawFloorDetail(next.regionId, x, y);
         if (kind === 'relic') {
-          this.graphics.fillStyle(0xe8c766, 1).fillCircle(x * TILE + TILE / 2, y * TILE + TILE / 2, 13);
-          this.graphics.lineStyle(3, 0xfff1a6, 1).strokeCircle(x * TILE + TILE / 2, y * TILE + TILE / 2, 20);
+          this.graphics.fillStyle(0xe8c766, 1).fillCircle(cx, cy, 13);
+          this.graphics.lineStyle(3, 0xfff1a6, 1).strokeCircle(cx, cy, 20);
         } else if (kind === 'hazard') {
-          this.graphics.fillStyle(0x8c342d, .95).fillTriangle(x * TILE + 12, y * TILE + 52, x * TILE + 32, y * TILE + 12, x * TILE + 52, y * TILE + 52);
+          this.graphics.fillStyle(0x8c342d, .95).fillTriangle(x * TILE + 12, y * TILE + 52, cx, y * TILE + 12, x * TILE + 52, y * TILE + 52);
         } else if (kind === 'ward') {
           this.graphics.fillStyle(0xc78f35, 1).fillRoundedRect(x * TILE + 17, y * TILE + 17, 30, 30, 8);
           this.graphics.lineStyle(3, 0xffdf85, 1).strokeRoundedRect(x * TILE + 14, y * TILE + 14, 36, 36, 10);
+        } else if (kind === 'tool') {
+          this.graphics.fillStyle(0x5ca6a8, 1).fillRoundedRect(x * TILE + 15, y * TILE + 20, 34, 25, 5);
+          this.graphics.lineStyle(3, 0xb9f0ea, 1).strokeRoundedRect(x * TILE + 15, y * TILE + 20, 34, 25, 5);
+          this.graphics.lineStyle(3, 0xb9f0ea, 1).strokeRect(x * TILE + 25, y * TILE + 14, 14, 8);
+        } else if (kind === 'guardian') {
+          this.graphics.fillStyle(0x5b2f68, .95).fillCircle(cx, cy, 21);
+          this.graphics.lineStyle(3, 0xdca7ee, 1).strokeCircle(cx, cy, 25);
+          this.graphics.fillStyle(0xf5d4ff, 1).fillEllipse(cx, cy, 22, 11);
+          this.graphics.fillStyle(0x24122b, 1).fillCircle(cx, cy, 5);
         } else if (kind === 'checkpoint') {
           const visited = next.visitedCheckpoints.some(point => point.x === x && point.y === y);
-          this.graphics.fillStyle(visited ? 0x315f56 : 0x3c7c8f, 1).fillCircle(x * TILE + TILE / 2, y * TILE + TILE / 2, 20);
-          this.graphics.lineStyle(4, visited ? 0x7db7a7 : 0xaee8ff, 1).strokeCircle(x * TILE + TILE / 2, y * TILE + TILE / 2, 24);
+          this.graphics.fillStyle(visited ? 0x315f56 : 0x3c7c8f, 1).fillCircle(cx, cy, 20);
+          this.graphics.lineStyle(4, visited ? 0x7db7a7 : 0xaee8ff, 1).strokeCircle(cx, cy, 24);
         } else if (kind === 'exit') {
           this.graphics.fillStyle(region.palette.accent, .75).fillRoundedRect(x * TILE + 11, y * TILE + 8, 42, 48, 8);
           this.graphics.lineStyle(4, 0xffefb0, 1).strokeRoundedRect(x * TILE + 11, y * TILE + 8, 42, 48, 8);
@@ -277,7 +281,7 @@ class TempleScene extends Phaser.Scene {
     }
 
     this.positionPlayer(next);
-    this.statusText.setText(next.status === 'won' ? 'LIVING SEED VAULT RECOVERED' : next.status === 'lost' ? 'EXPEDITION LOST' : `${region.name.toUpperCase()} · RELICS ${next.collected}/${next.relicGoal} · WARDS ${next.wards}`);
+    this.statusText.setText(next.status === 'won' ? 'LIVING SEED VAULT RECOVERED' : next.status === 'lost' ? 'EXPEDITION LOST' : `${region.name.toUpperCase()} · RELICS ${next.collected}/${next.relicGoal} · KITS ${next.tools}`);
   }
 }
 
@@ -292,10 +296,7 @@ new Phaser.Game({
   scene: TempleScene
 });
 
-audioButton.addEventListener('click', () => {
-  audio.toggle();
-  syncAudioButton();
-});
+audioButton.addEventListener('click', () => { audio.toggle(); syncAudioButton(); });
 restartButton.addEventListener('click', restartGame);
 playAgainButton.addEventListener('click', restartGame);
 saveButton.addEventListener('click', () => persistState());
