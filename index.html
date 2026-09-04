@@ -55,6 +55,10 @@
           <span data-region-step="sunken_archive">2 · Sunken Archive</span>
           <span data-region-step="vault_heart">3 · Vault Heart</span>
         </div>
+        <div class="record-card" aria-label="Expedition records">
+          <span>Best Escape</span><strong id="bestMoves">—</strong>
+          <small id="winCount">0 completed expeditions</small>
+        </div>
         <details>
           <summary>Controls & survival rules</summary>
           <ul>
@@ -79,5 +83,19 @@
       </div>
     </nav>
   </main>
+
+  <section id="resultModal" class="result-modal" role="dialog" aria-modal="true" aria-labelledby="resultTitle" hidden>
+    <div class="result-card">
+      <span class="eyebrow" id="resultEyebrow">Expedition Complete</span>
+      <h2 id="resultTitle">Living Seed Vault Recovered</h2>
+      <p id="resultText"></p>
+      <div class="result-stats">
+        <div><span>Moves</span><strong id="resultMoves">0</strong></div>
+        <div><span>Relics</span><strong id="resultRelics">0 / 6</strong></div>
+        <div><span>Regions</span><strong id="resultRegions">0 / 3</strong></div>
+      </div>
+      <button id="playAgainButton" type="button">Play Again</button>
+    </div>
+  </section>
 </body>
 </html>
