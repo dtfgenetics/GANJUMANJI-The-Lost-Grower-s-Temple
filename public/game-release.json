@@ -10,16 +10,23 @@
   "campaign": {
     "regions": 3,
     "relicSeeds": 6,
-    "saveVersion": 3
+    "saveVersion": 4,
+    "pressureCurve": [9, 7, 5]
   },
   "features": [
     "three-region campaign",
-    "local checkpoint saves",
+    "local checkpoint saves and loss recovery",
+    "versioned save migration",
     "resin wards",
+    "expedition kits",
+    "guardian encounters",
     "sanctuary healing",
+    "escalating regional surge pressure",
+    "campaign solvability validation",
     "persistent best-run records",
     "desktop and mobile controls",
-    "responsive HUD",
-    "win and loss results"
+    "responsive low-chrome HUD and field journal",
+    "win and loss results",
+    "progressive audio cues"
   ]
 }
