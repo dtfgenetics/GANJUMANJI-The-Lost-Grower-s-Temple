@@ -24,8 +24,10 @@
     </header>
 
     <section class="hud" aria-label="Expedition status">
-      <div><span>Health</span><strong id="health">3</strong></div>
+      <div><span>Health</span><strong id="health">3 / 3</strong></div>
       <div><span>Relic Seeds</span><strong id="relics">0 / 3</strong></div>
+      <div><span>Resin Wards</span><strong id="wards">0</strong></div>
+      <div><span>Sanctuaries</span><strong id="checkpoints">0 / 2</strong></div>
       <div><span>Danger</span><strong id="danger">0 / 10</strong></div>
       <div><span>Moves</span><strong id="turns">0</strong></div>
     </section>
@@ -44,10 +46,11 @@
         <h2>Recover. Survive. Escape.</h2>
         <p>Find all three glowing relic seeds, then reach the vault gate before the temple drains your health.</p>
         <ul>
-          <li>Arrow keys or WASD move.</li>
-          <li>Press R to restart the expedition.</li>
+          <li>Arrow keys or WASD move. Press R to restart.</li>
           <li>Stone walls block movement.</li>
-          <li>Red trap tiles cost health once.</li>
+          <li>Red trap tiles trigger once.</li>
+          <li>Golden ward caches absorb one future damage.</li>
+          <li>Blue sanctuaries restore health once and mark route progress.</li>
           <li>The temple surges every 9 successful moves.</li>
           <li>Successful moves create a local checkpoint save.</li>
         </ul>
