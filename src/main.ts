@@ -39,6 +39,7 @@ const resultText = document.querySelector('#resultText') as HTMLElement;
 const resultMoves = document.querySelector('#resultMoves') as HTMLElement;
 const resultRelics = document.querySelector('#resultRelics') as HTMLElement;
 const resultRegions = document.querySelector('#resultRegions') as HTMLElement;
+const continueResultButton = document.querySelector('#continueResultButton') as HTMLButtonElement;
 const playAgainButton = document.querySelector('#playAgainButton') as HTMLButtonElement;
 
 function getStorage(): Storage | null {
@@ -62,16 +63,23 @@ function syncRecord() {
 function syncResult() {
   const ended = state.status !== 'playing';
   resultModal.hidden = !ended;
-  if (!ended) return;
+  if (!ended) {
+    continueResultButton.hidden = true;
+    return;
+  }
   const won = state.status === 'won';
   resultEyebrow.textContent = won ? 'Expedition Complete' : 'Expedition Lost';
   resultTitle.textContent = won ? 'Living Seed Vault Recovered' : 'The Temple Claimed This Run';
+  const checkpointAvailable = !won && Boolean(loadExpedition(getStorage()));
   resultText.textContent = won
     ? 'Every relic seed is secure. Your route is recorded—return and try to escape in fewer moves.'
-    : 'Use Continue to return to the last safe checkpoint, or start a fresh expedition.';
+    : checkpointAvailable
+      ? 'Return to the last safe checkpoint or start a fresh expedition.'
+      : 'No safe checkpoint is available. Start a fresh expedition and choose another route.';
   resultMoves.textContent = String(state.turn);
   resultRelics.textContent = `${state.campaignCollected} / ${state.campaignRelicGoal}`;
   resultRegions.textContent = `${state.regionsCleared.length} / 3`;
+  continueResultButton.hidden = !checkpointAvailable;
   playAgainButton.textContent = won ? 'Start New Expedition' : 'Restart Expedition';
 }
 
@@ -128,6 +136,7 @@ function continueGame() {
   if (!loaded) {
     saveStatus.textContent = 'No saved expedition found';
     continueButton.disabled = true;
+    continueResultButton.hidden = true;
     return;
   }
   state = loaded;
@@ -243,7 +252,6 @@ class TempleScene extends Phaser.Scene {
     if (!this.graphics || !this.player || !this.statusText) return;
     const region = getRegion(next);
     this.graphics.clear();
-
     for (let y = 0; y < next.height; y += 1) {
       for (let x = 0; x < next.width; x += 1) {
         const kind = tileKind(next, { x, y });
@@ -279,7 +287,6 @@ class TempleScene extends Phaser.Scene {
         }
       }
     }
-
     this.positionPlayer(next);
     this.statusText.setText(next.status === 'won' ? 'LIVING SEED VAULT RECOVERED' : next.status === 'lost' ? 'EXPEDITION LOST' : `${region.name.toUpperCase()} · RELICS ${next.collected}/${next.relicGoal} · KITS ${next.tools}`);
   }
@@ -299,11 +306,9 @@ new Phaser.Game({
 audioButton.addEventListener('click', () => { audio.toggle(); syncAudioButton(); });
 restartButton.addEventListener('click', restartGame);
 playAgainButton.addEventListener('click', restartGame);
+continueResultButton.addEventListener('click', continueGame);
 saveButton.addEventListener('click', () => persistState());
 continueButton.addEventListener('click', continueGame);
-
-document.querySelectorAll<HTMLButtonElement>('[data-move]').forEach((button) => {
-  button.addEventListener('click', () => dispatch(actionFromMoveControl(button.dataset.move)));
-});
+document.querySelectorAll<HTMLButtonElement>('[data-move]').forEach((button) => button.addEventListener('click', () => dispatch(actionFromMoveControl(button.dataset.move))));
 
 syncHud();
