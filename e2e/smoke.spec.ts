@@ -19,6 +19,14 @@ test('renders campaign HUD, checkpoints movement, restores save, and restarts cl
   await expect(page.locator('[data-region-step="root_halls"]')).toHaveAttribute('data-state', 'current');
   await expect(page.getByRole('button', { name: 'Continue' })).toBeDisabled();
 
+  const audio = page.locator('#audioButton');
+  await expect(audio).toHaveText('Sound On');
+  await audio.click();
+  await expect(audio).toHaveText('Sound Off');
+  await expect(audio).toHaveAttribute('aria-pressed', 'false');
+  await page.reload();
+  await expect(page.locator('#audioButton')).toHaveText('Sound Off');
+
   await page.keyboard.press('ArrowRight');
   await expect(page.locator('#turns')).toHaveText('1');
   await expect(page.locator('#saveStatus')).toHaveText('Checkpoint saved');
