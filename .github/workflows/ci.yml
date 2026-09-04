@@ -17,7 +17,7 @@ concurrency:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,3 +26,13 @@ jobs:
       - run: npm install
       - run: npm test
       - run: npm run build
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run browser acceptance
+        run: npm run test:e2e
+      - name: Upload production build
+        uses: actions/upload-artifact@v4
+        with:
+          name: ganjumanji-production-build
+          path: dist/
+          if-no-files-found: error
