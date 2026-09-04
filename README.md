@@ -1,34 +1,52 @@
 # Ganjumanji: The Lost Grower's Temple
 
-Status: **playable browser vertical slice / active development**.
+Status: **playable three-region browser campaign / release candidate in active QA**.
 
-Ganjumanji is an original DTF Genetics top-down temple-expedition browser game built with Phaser, TypeScript, and Vite. Gameplay state is owned outside the renderer so rules, progression, input, and saves remain deterministic and testable.
+Ganjumanji is an original DTF Genetics top-down temple-expedition browser game built with Phaser, TypeScript, and Vite. Gameplay state is owned outside the renderer so rules, progression, input, records, and saves remain deterministic and testable.
 
-## Current playable loop
+## Current playable campaign
 
-- Explore an 11×9 temple grid with keyboard or touch controls.
-- Recover all three relic seeds before escaping through the vault gate.
-- Avoid one-use temple traps and survive periodic temple surges.
+The expedition now has a complete beginning-to-end structure:
+
+1. **The Root Halls** — recover 3 relic seeds and open the first sealed passage.
+2. **The Sunken Archive** — recover 2 relic seeds through a denser hazard layout.
+3. **The Vault Heart** — recover the final relic and escape with the Living Seed Vault.
+
+Across the campaign players can:
+
+- Move with Arrow/WASD keyboard controls or the responsive touch D-pad.
+- Navigate region-specific stone layouts and palettes.
+- Recover 6 campaign relic seeds across 3 regions.
+- Avoid one-use traps and survive periodic temple surges.
 - Collect resin wards that absorb one future damage event.
-- Discover one-use sanctuary checkpoints that can restore health.
-- Save manually or continue from automatic movement checkpoints.
-- Restart cleanly without retaining stale expedition state.
-- Win by recovering every relic seed and reaching the vault; lose when health reaches zero.
+- Secure sanctuary checkpoints that restore health once.
+- Save manually or continue from automatic safe movement checkpoints.
+- Preserve the previous safe checkpoint after a failed run.
+- Record completed expeditions and a persistent best-move escape score.
+- Finish through a dedicated win/loss results surface and replay immediately.
 
 ## Architecture
 
-- `src/game/model.ts` — deterministic expedition rules and saveable simulation state.
+- `src/game/content.ts` — data-driven campaign regions, layouts, pickups, hazards, and presentation palettes.
+- `src/game/model.ts` — deterministic expedition rules, transitions, survival systems, and saveable simulation state.
 - `src/game/input.ts` — physical keyboard/touch input mapped into game actions.
-- `src/game/storage.ts` — versioned save serialization and migration.
-- `src/main.ts` — Phaser rendering and DOM HUD integration.
-- `test/` — deterministic rules, input, and save tests.
+- `src/game/storage.ts` — versioned save serialization and migration through save version 3.
+- `src/game/records.ts` — persistent best-run and completed-expedition records.
+- `src/main.ts` — thin Phaser renderer plus DOM HUD/results integration.
+- `test/` — deterministic rules, content reachability, input, save migration, and record tests.
 - `e2e/` — desktop/mobile Playwright acceptance with screenshot evidence.
-- `.github/workflows/ci.yml` — tests, TypeScript/Vite production build, browser acceptance, screenshots, and deployable build artifact.
+- `public/game-release.json` — production route and campaign release metadata.
+- `scripts/validate-release.mjs` — verifies the built bundle is safe for `/games/ganjumanji/`.
+- `.github/workflows/ci.yml` — tests, build, route validation, browser acceptance, screenshot evidence, and deployable build artifact.
 
-## DTFSeeds integration
+## Production route
 
-The Vite production base is configured for `/games/ganjumanji/`. Keep the project gated from the public playable catalog until the vertical slice has completed browser QA, visual review, production packaging, and live-route verification on dtfseeds.com.
+The Vite base and release contract target:
 
-## Next milestone
+`/games/ganjumanji/`
 
-Expand the vertical slice into a larger expedition structure with multiple temple rooms/regions, data-driven encounters, inventory/tools, persistent expedition progression, production art/animation/audio, and stronger accessibility/mobile playtesting without moving gameplay rules into Phaser scenes.
+The CI production artifact is intended to be copied into the DTFSeeds public game route only after the release-candidate gates pass. The game should not be marked fully production-ready until the latest CI is green and the deployed route receives browser/live QA.
+
+## Remaining release work
+
+The core game loop and campaign structure are now implemented. Remaining work is release polish rather than foundational architecture: production character/environment artwork, audio cues, final browser screenshot review, live DTFSeeds packaging, and live-route verification.
