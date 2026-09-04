@@ -11,46 +11,59 @@
 <body>
   <main class="game-shell">
     <header class="topbar">
-      <div>
-        <span class="eyebrow">DTF Genetics · Playable Campaign Build</span>
+      <div class="brand-lockup">
+        <span class="eyebrow">DTF Genetics</span>
         <h1>Ganjumanji</h1>
         <p>The Lost Grower's Temple</p>
       </div>
       <div class="topbar-actions" aria-label="Expedition controls">
+        <button id="journalButton" type="button" aria-expanded="false" aria-controls="guidePanel">Journal</button>
         <button id="audioButton" type="button" aria-pressed="true">Sound On</button>
         <button id="continueButton" type="button">Continue</button>
         <button id="saveButton" type="button">Save</button>
-        <button id="restartButton" type="button">Restart Expedition</button>
+        <button id="restartButton" type="button">Restart</button>
       </div>
     </header>
 
-    <section class="hud" aria-label="Expedition status">
-      <div><span>Health</span><strong id="health">3 / 3</strong></div>
-      <div><span>Campaign Relics</span><strong id="relics">0 / 6</strong></div>
-      <div><span>Resin Wards</span><strong id="wards">0</strong></div>
-      <div><span>Regions Cleared</span><strong id="regions">0 / 3</strong></div>
-      <div><span>Danger</span><strong id="danger">0 / 10</strong></div>
-      <div><span>Moves</span><strong id="turns">0</strong></div>
-    </section>
-
-    <section class="play-layout">
+    <section class="play-stage">
       <div class="game-panel">
-        <div class="region-strip">
-          <div><span class="eyebrow">Current Region</span><strong id="regionName">The Root Halls</strong></div>
-          <div class="region-goal"><span>Local Relics</span><strong id="regionRelics">0 / 3</strong></div>
-          <div class="region-goal"><span>Sanctuaries</span><strong id="checkpoints">0 / 2</strong></div>
+        <div class="hud-strip" aria-label="Expedition status">
+          <div class="objective-chip">
+            <span>Current Region</span>
+            <strong id="regionName">The Root Halls</strong>
+            <small id="regionDescription">Vines, old stone, and the first relic seals.</small>
+          </div>
+          <div class="hud-cluster">
+            <div><span>HP</span><strong id="health">3 / 3</strong></div>
+            <div><span>Relics</span><strong id="relics">0 / 6</strong></div>
+            <div><span>Wards</span><strong id="wards">0</strong></div>
+            <div><span>Danger</span><strong id="danger">0 / 10</strong></div>
+          </div>
         </div>
+
         <div id="game" aria-label="Ganjumanji temple board"></div>
-        <div class="status-row">
+
+        <div class="play-footer">
+          <div class="local-goal">
+            <span>Region relics <strong id="regionRelics">0 / 3</strong></span>
+            <span>Sanctuaries <strong id="checkpoints">0 / 2</strong></span>
+            <span>Regions <strong id="regions">0 / 3</strong></span>
+            <span>Moves <strong id="turns">0</strong></span>
+          </div>
           <p id="message" class="message" aria-live="polite"></p>
           <span id="saveStatus" class="save-status" aria-live="polite">Autosave ready</span>
         </div>
       </div>
 
-      <aside class="guide">
-        <span class="eyebrow">Expedition Goal</span>
-        <h2 id="regionTitle">The Root Halls</h2>
-        <p id="regionDescription">Recover every relic seed in this chamber and reach the sealed passage.</p>
+      <aside id="guidePanel" class="guide" aria-hidden="true">
+        <div class="guide-header">
+          <div>
+            <span class="eyebrow">Field Journal</span>
+            <h2 id="regionTitle">The Root Halls</h2>
+          </div>
+          <button id="closeJournalButton" type="button" aria-label="Close journal">×</button>
+        </div>
+        <p id="journalRegionDescription">Recover every relic seed in this chamber and reach the sealed passage.</p>
         <div class="campaign-path" aria-label="Temple campaign route">
           <span data-region-step="root_halls">1 · Root Halls</span>
           <span data-region-step="sunken_archive">2 · Sunken Archive</span>
@@ -60,19 +73,20 @@
           <span>Best Escape</span><strong id="bestMoves">—</strong>
           <small id="winCount">0 completed expeditions</small>
         </div>
-        <details>
-          <summary>Controls & survival rules</summary>
+        <div class="rules-card">
+          <h3>Survival Rules</h3>
           <ul>
             <li>Arrow keys or WASD move. Press R to restart.</li>
             <li>Stone walls block movement.</li>
-            <li>Red trap tiles trigger once.</li>
-            <li>Golden ward caches absorb one future damage.</li>
+            <li>Red traps trigger once.</li>
+            <li>Golden wards absorb one future damage.</li>
             <li>Blue sanctuaries restore health once.</li>
-            <li>The temple surges every 9 successful moves in a region.</li>
+            <li>The temple surges every 9 successful regional moves.</li>
             <li>Successful moves create a local checkpoint save.</li>
           </ul>
-        </details>
+        </div>
       </aside>
+      <button id="journalBackdrop" class="journal-backdrop" type="button" aria-label="Close journal" hidden></button>
     </section>
 
     <nav class="mobile-controls" aria-label="Touch movement controls">
