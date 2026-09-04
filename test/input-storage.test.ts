@@ -19,7 +19,7 @@ describe('Ganjumanji input mapping', () => {
 });
 
 describe('Ganjumanji save boundary', () => {
-  it('round-trips progression-aware expedition state', () => {
+  it('round-trips progression-aware campaign state', () => {
     const state = createGame();
     state.wards = 2;
     state.visitedCheckpoints = [{ x: 1, y: 3 }];
@@ -27,22 +27,27 @@ describe('Ganjumanji save boundary', () => {
     const restored = parseExpedition(serializeExpedition(advanced));
     expect(restored).toEqual(advanced);
     expect(restored).not.toBe(advanced);
+    expect(restored?.regionId).toBe('root_halls');
+    expect(restored?.campaignRelicGoal).toBe(6);
   });
 
-  it('migrates version 1 saves without progression fields', () => {
+  it('migrates version 1 saves into the Root Halls campaign', () => {
     const legacy = createGame();
     const legacyState = { ...legacy } as Record<string, unknown>;
-    delete legacyState.maxHealth;
-    delete legacyState.wards;
-    delete legacyState.wardCaches;
-    delete legacyState.checkpoints;
-    delete legacyState.visitedCheckpoints;
+    for (const field of ['maxHealth','wards','wardCaches','checkpoints','visitedCheckpoints','regionId','regionTurn','campaignCollected','campaignRelicGoal','regionsCleared']) {
+      delete legacyState[field];
+    }
     const restored = parseExpedition(JSON.stringify({ version: 1, state: legacyState }));
     expect(restored?.maxHealth).toBe(3);
     expect(restored?.wards).toBe(0);
     expect(restored?.wardCaches).toEqual([]);
     expect(restored?.checkpoints).toEqual([]);
     expect(restored?.visitedCheckpoints).toEqual([]);
+    expect(restored?.regionId).toBe('root_halls');
+    expect(restored?.regionTurn).toBe(0);
+    expect(restored?.campaignCollected).toBe(0);
+    expect(restored?.campaignRelicGoal).toBe(6);
+    expect(restored?.regionsCleared).toEqual([]);
   });
 
   it('rejects malformed or unsupported saves', () => {
