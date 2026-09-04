@@ -59,9 +59,15 @@
   <script>
     (() => {
       const journal = document.getElementById('guidePanel'); const openButton = document.getElementById('journalButton'); const closeButton = document.getElementById('closeJournalButton'); const backdrop = document.getElementById('journalBackdrop');
-      const setOpen = (open) => { journal.dataset.open = String(open); journal.setAttribute('aria-hidden', String(!open)); openButton.setAttribute('aria-expanded', String(open)); backdrop.hidden = !open; if (open) closeButton.focus(); else openButton.focus(); };
+      const moveButtons = [...document.querySelectorAll('[data-move]')];
+      const gameplayKeys = new Set(['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd', 'r']);
+      const setOpen = (open) => { journal.dataset.open = String(open); journal.setAttribute('aria-hidden', String(!open)); openButton.setAttribute('aria-expanded', String(open)); backdrop.hidden = !open; moveButtons.forEach((button) => { button.disabled = open; }); if (open) closeButton.focus(); else openButton.focus(); };
       openButton.addEventListener('click', () => setOpen(journal.dataset.open !== 'true')); closeButton.addEventListener('click', () => setOpen(false)); backdrop.addEventListener('click', () => setOpen(false));
-      document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && journal.dataset.open === 'true') { event.preventDefault(); event.stopPropagation(); setOpen(false); } }, true);
+      document.addEventListener('keydown', (event) => {
+        if (journal.dataset.open !== 'true') return;
+        if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); setOpen(false); return; }
+        if (gameplayKeys.has(event.key.toLowerCase())) { event.preventDefault(); event.stopPropagation(); }
+      }, true);
     })();
   </script>
 </body>
