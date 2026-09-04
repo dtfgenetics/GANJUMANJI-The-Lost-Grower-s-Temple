@@ -163,7 +163,9 @@ function finishRun(previousStatus: TempleState['status']) {
 function cueForMove(previous: TempleState, next: TempleState): AudioCue {
   if (previous.regionId !== next.regionId) return 'region';
   if (next.campaignCollected > previous.campaignCollected) return 'relic';
-  if (next.wards > previous.wards || next.tools > previous.tools) return 'ward';
+  if (next.tools > previous.tools) return 'tool';
+  if (next.guardians.length < previous.guardians.length) return 'guardian';
+  if (next.wards > previous.wards) return 'ward';
   if (next.visitedCheckpoints.length > previous.visitedCheckpoints.length) return 'checkpoint';
   if (next.health < previous.health || next.wards < previous.wards) return 'damage';
   return 'move';
