@@ -26,7 +26,7 @@ describe('Ganjumanji campaign content', () => {
   for (const region of Object.values(REGIONS)) {
     it(`${region.name} keeps every required gameplay tile valid and reachable`, () => {
       const wallKeys = new Set(region.walls.map(key));
-      const required = [region.start, region.exit, ...region.relics, ...region.wardCaches, ...region.kitCaches, ...region.guardians, ...region.checkpoints, ...region.hazards];
+      const required = [region.start, region.exit, ...region.relics, ...region.wardCaches, ...region.toolCaches, ...region.guardians, ...region.checkpoints, ...region.hazards];
       for (const point of required) {
         expect(point.x).toBeGreaterThanOrEqual(0);
         expect(point.y).toBeGreaterThanOrEqual(0);
@@ -37,13 +37,13 @@ describe('Ganjumanji campaign content', () => {
 
       const reachable = reachablePoints(region.width, region.height, region.start, region.walls);
       expect(reachable.has(key(region.exit))).toBe(true);
-      for (const point of [...region.relics, ...region.wardCaches, ...region.kitCaches, ...region.guardians, ...region.checkpoints]) {
+      for (const point of [...region.relics, ...region.wardCaches, ...region.toolCaches, ...region.guardians, ...region.checkpoints]) {
         expect(reachable.has(key(point))).toBe(true);
       }
     });
 
     it(`${region.name} does not duplicate critical pickups or encounters`, () => {
-      const objectKeys = [...region.relics, ...region.wardCaches, ...region.kitCaches, ...region.guardians, ...region.checkpoints].map(key);
+      const objectKeys = [...region.relics, ...region.wardCaches, ...region.toolCaches, ...region.guardians, ...region.checkpoints].map(key);
       expect(new Set(objectKeys).size).toBe(objectKeys.length);
     });
   }
