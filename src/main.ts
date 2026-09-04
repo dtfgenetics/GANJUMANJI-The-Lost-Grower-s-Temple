@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import './styles.css';
+import { GameAudio, type AudioCue } from './game/audio';
 import type { RegionId } from './game/content';
 import { createGame, getRegion, move, tileKind, type TempleState } from './game/model';
 import { actionFromKeyboard, actionFromMoveControl, type GameAction } from './game/input';
@@ -22,6 +23,7 @@ const regionRelics = document.querySelector('#regionRelics') as HTMLElement;
 const regionTitle = document.querySelector('#regionTitle') as HTMLElement;
 const regionDescription = document.querySelector('#regionDescription') as HTMLElement;
 const message = document.querySelector('#message') as HTMLElement;
+const audioButton = document.querySelector('#audioButton') as HTMLButtonElement;
 const restartButton = document.querySelector('#restartButton') as HTMLButtonElement;
 const saveButton = document.querySelector('#saveButton') as HTMLButtonElement;
 const continueButton = document.querySelector('#continueButton') as HTMLButtonElement;
@@ -39,6 +41,14 @@ const playAgainButton = document.querySelector('#playAgainButton') as HTMLButton
 
 function getStorage(): Storage | null {
   try { return globalThis.localStorage ?? null; } catch { return null; }
+}
+
+const audio = new GameAudio(getStorage());
+
+function syncAudioButton() {
+  const enabled = audio.isEnabled();
+  audioButton.textContent = enabled ? 'Sound On' : 'Sound Off';
+  audioButton.setAttribute('aria-pressed', String(enabled));
 }
 
 function syncRecord() {
@@ -85,6 +95,7 @@ function syncHud() {
     if (!id) return;
     step.dataset.state = state.regionsCleared.includes(id) ? 'complete' : id === state.regionId ? 'current' : 'locked';
   });
+  syncAudioButton();
   syncRecord();
   syncResult();
 }
@@ -127,9 +138,20 @@ function finishRun(previousStatus: TempleState['status']) {
     recordWin(getStorage(), state.turn);
     clearExpedition(getStorage());
     saveStatus.textContent = 'Campaign complete';
+    audio.play('win');
   } else {
     saveStatus.textContent = 'Last safe checkpoint preserved';
+    audio.play('lose');
   }
+}
+
+function cueForMove(previous: TempleState, next: TempleState): AudioCue {
+  if (previous.regionId !== next.regionId) return 'region';
+  if (next.campaignCollected > previous.campaignCollected) return 'relic';
+  if (next.wards > previous.wards) return 'ward';
+  if (next.visitedCheckpoints.length > previous.visitedCheckpoints.length) return 'checkpoint';
+  if (next.health < previous.health || next.wards < previous.wards) return 'damage';
+  return 'move';
 }
 
 function dispatch(action: GameAction | null) {
@@ -139,10 +161,12 @@ function dispatch(action: GameAction | null) {
     return;
   }
   if (state.status !== 'playing') return;
+  const previous = structuredClone(state) as TempleState;
   const previousTurn = state.turn;
   const previousRegion = state.regionId;
   const previousStatus = state.status;
   state = move(state, action.direction);
+  if (state.turn !== previousTurn) audio.play(cueForMove(previous, state));
   if (state.turn !== previousTurn && state.status === 'playing') {
     persistState(previousRegion !== state.regionId ? 'Region checkpoint saved' : 'Checkpoint saved');
   }
@@ -182,9 +206,7 @@ class TempleScene extends Phaser.Scene {
     const stem = this.add.rectangle(0, -23, 3, 10, 0x4f8b4c).setRotation(-0.08);
     const leafLeft = this.add.ellipse(-6, -29, 12, 7, 0x62a85d).setRotation(-0.42);
     const leafRight = this.add.ellipse(6, -30, 12, 7, 0x70b96a).setRotation(0.35);
-    const explorer = this.add.container(0, 0, [stem, leafLeft, leafRight, body, belly, eyeLeft, eyeRight, smile]);
-    explorer.setDepth(4);
-    return explorer;
+    return this.add.container(0, 0, [stem, leafLeft, leafRight, body, belly, eyeLeft, eyeRight, smile]).setDepth(4);
   }
 
   private drawFloorDetail(regionId: RegionId, x: number, y: number) {
@@ -270,6 +292,10 @@ new Phaser.Game({
   scene: TempleScene
 });
 
+audioButton.addEventListener('click', () => {
+  audio.toggle();
+  syncAudioButton();
+});
 restartButton.addEventListener('click', restartGame);
 playAgainButton.addEventListener('click', restartGame);
 saveButton.addEventListener('click', () => persistState());
