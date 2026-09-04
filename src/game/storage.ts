@@ -3,55 +3,34 @@ import { createGame, type TempleState } from './model';
 
 export const SAVE_KEY = 'dtf-ganjumanji-expedition-v1';
 
-export type SavedExpedition = {
-  version: 3;
-  savedAt: string;
-  state: TempleState;
-};
+export type SavedExpedition = { version: 4; savedAt: string; state: TempleState };
 
 type LegacyTempleState = Partial<TempleState> & {
-  width: number;
-  height: number;
-  health: number;
-  turn: number;
-  player: TempleState['player'];
-  walls: TempleState['walls'];
-  hazards: TempleState['hazards'];
-  relics: TempleState['relics'];
+  width: number; height: number; health: number; turn: number; player: TempleState['player'];
+  walls: TempleState['walls']; hazards: TempleState['hazards']; relics: TempleState['relics'];
 };
 
 export function serializeExpedition(state: TempleState): string {
-  const payload: SavedExpedition = {
-    version: 3,
-    savedAt: new Date().toISOString(),
-    state: structuredClone(state)
-  };
-  return JSON.stringify(payload);
+  return JSON.stringify({ version: 4, savedAt: new Date().toISOString(), state: structuredClone(state) } satisfies SavedExpedition);
 }
 
 function isBaseState(state: Partial<TempleState>): state is LegacyTempleState {
-  return typeof state.width === 'number' &&
-    typeof state.height === 'number' &&
-    typeof state.health === 'number' &&
-    typeof state.turn === 'number' &&
-    Boolean(state.player) &&
-    Array.isArray(state.walls) &&
-    Array.isArray(state.hazards) &&
-    Array.isArray(state.relics);
+  return typeof state.width === 'number' && typeof state.height === 'number' && typeof state.health === 'number' &&
+    typeof state.turn === 'number' && Boolean(state.player) && Array.isArray(state.walls) && Array.isArray(state.hazards) && Array.isArray(state.relics);
 }
 
 function migrateState(state: LegacyTempleState): TempleState {
   const fresh = createGame();
-  const campaignCollected = typeof state.campaignCollected === 'number'
-    ? state.campaignCollected
-    : Math.max(0, Number(state.collected ?? 0));
+  const campaignCollected = typeof state.campaignCollected === 'number' ? state.campaignCollected : Math.max(0, Number(state.collected ?? 0));
   return {
-    ...fresh,
-    ...state,
+    ...fresh, ...state,
     maxHealth: typeof state.maxHealth === 'number' ? state.maxHealth : fresh.maxHealth,
     wards: typeof state.wards === 'number' ? state.wards : 0,
-    wardCaches: Array.isArray(state.wardCaches) ? state.wardCaches : [],
-    checkpoints: Array.isArray(state.checkpoints) ? state.checkpoints : [],
+    tools: typeof state.tools === 'number' ? state.tools : 0,
+    wardCaches: Array.isArray(state.wardCaches) ? state.wardCaches : fresh.wardCaches,
+    toolCaches: Array.isArray(state.toolCaches) ? state.toolCaches : fresh.toolCaches,
+    guardians: Array.isArray(state.guardians) ? state.guardians : fresh.guardians,
+    checkpoints: Array.isArray(state.checkpoints) ? state.checkpoints : fresh.checkpoints,
     visitedCheckpoints: Array.isArray(state.visitedCheckpoints) ? state.visitedCheckpoints : [],
     regionId: state.regionId ?? 'root_halls',
     regionTurn: typeof state.regionTurn === 'number' ? state.regionTurn : state.turn,
@@ -65,30 +44,19 @@ export function parseExpedition(raw: string | null): TempleState | null {
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as { version?: number; state?: Partial<TempleState> };
-    if (![1, 2, 3].includes(Number(parsed.version)) || !parsed.state || !isBaseState(parsed.state)) return null;
+    if (![1, 2, 3, 4].includes(Number(parsed.version)) || !parsed.state || !isBaseState(parsed.state)) return null;
     return structuredClone(migrateState(parsed.state));
-  } catch {
-    return null;
-  }
+  } catch { return null; }
 }
 
 export function saveExpedition(storage: Storage | null | undefined, state: TempleState): boolean {
   if (!storage) return false;
-  try {
-    storage.setItem(SAVE_KEY, serializeExpedition(state));
-    return true;
-  } catch {
-    return false;
-  }
+  try { storage.setItem(SAVE_KEY, serializeExpedition(state)); return true; } catch { return false; }
 }
 
 export function loadExpedition(storage: Storage | null | undefined): TempleState | null {
   if (!storage) return null;
-  try {
-    return parseExpedition(storage.getItem(SAVE_KEY));
-  } catch {
-    return null;
-  }
+  try { return parseExpedition(storage.getItem(SAVE_KEY)); } catch { return null; }
 }
 
 export function clearExpedition(storage: Storage | null | undefined): void {
