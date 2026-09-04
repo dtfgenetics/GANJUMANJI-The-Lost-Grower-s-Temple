@@ -1,0 +1,25 @@
+{
+  "id": "ganjumanji",
+  "title": "Ganjumanji: The Lost Grower's Temple",
+  "route": "/games/ganjumanji/",
+  "runtime": "phaser-vite-typescript",
+  "status": "release-candidate",
+  "version": "0.3.0",
+  "players": "1",
+  "input": ["keyboard", "touch"],
+  "campaign": {
+    "regions": 3,
+    "relicSeeds": 6,
+    "saveVersion": 3
+  },
+  "features": [
+    "three-region campaign",
+    "local checkpoint saves",
+    "resin wards",
+    "sanctuary healing",
+    "persistent best-run records",
+    "desktop and mobile controls",
+    "responsive HUD",
+    "win and loss results"
+  ]
+}
