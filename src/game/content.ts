@@ -63,7 +63,7 @@ export const REGIONS: Record<RegionId, RegionDefinition> = {
     start: { x: 1, y: 7 }, exit: { x: 9, y: 1 }, nextRegion: null,
     relics: [{ x: 5, y: 2 }],
     hazards: [{ x: 2, y: 6 }, { x: 4, y: 6 }, { x: 6, y: 5 }, { x: 7, y: 3 }, { x: 5, y: 1 }],
-    wardCaches: [{ x: 1, y: 3 }],
+    wardCaches: [{ x: 2, y: 7 }, { x: 1, y: 3 }],
     toolCaches: [{ x: 2, y: 2 }],
     guardians: [{ x: 5, y: 6 }, { x: 7, y: 2 }],
     checkpoints: [{ x: 5, y: 5 }],
