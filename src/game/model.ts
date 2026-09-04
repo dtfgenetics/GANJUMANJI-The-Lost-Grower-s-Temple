@@ -8,11 +8,16 @@ export type TempleState = {
   turn: number;
   danger: number;
   health: number;
+  maxHealth: number;
+  wards: number;
   player: Point;
   exit: Point;
   walls: Point[];
   hazards: Point[];
   relics: Point[];
+  wardCaches: Point[];
+  checkpoints: Point[];
+  visitedCheckpoints: Point[];
   collected: number;
   relicGoal: number;
   status: GameStatus;
@@ -23,6 +28,8 @@ const START: Point = { x: 1, y: 7 };
 const EXIT: Point = { x: 9, y: 1 };
 const RELICS: Point[] = [{ x: 2, y: 2 }, { x: 8, y: 6 }, { x: 6, y: 3 }];
 const HAZARDS: Point[] = [{ x: 4, y: 6 }, { x: 7, y: 5 }, { x: 5, y: 2 }];
+const WARD_CACHES: Point[] = [{ x: 2, y: 1 }, { x: 6, y: 6 }];
+const CHECKPOINTS: Point[] = [{ x: 1, y: 3 }, { x: 9, y: 6 }];
 const WALLS: Point[] = [
   { x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }, { x: 4, y: 0 }, { x: 5, y: 0 }, { x: 6, y: 0 }, { x: 7, y: 0 }, { x: 8, y: 0 }, { x: 9, y: 0 }, { x: 10, y: 0 },
   { x: 0, y: 8 }, { x: 1, y: 8 }, { x: 2, y: 8 }, { x: 3, y: 8 }, { x: 4, y: 8 }, { x: 5, y: 8 }, { x: 6, y: 8 }, { x: 7, y: 8 }, { x: 8, y: 8 }, { x: 9, y: 8 }, { x: 10, y: 8 },
@@ -44,11 +51,16 @@ export function createGame(): TempleState {
     turn: 0,
     danger: 0,
     health: 3,
+    maxHealth: 3,
+    wards: 0,
     player: { ...START },
     exit: { ...EXIT },
     walls: WALLS.map((point) => ({ ...point })),
     hazards: HAZARDS.map((point) => ({ ...point })),
     relics: RELICS.map((point) => ({ ...point })),
+    wardCaches: WARD_CACHES.map((point) => ({ ...point })),
+    checkpoints: CHECKPOINTS.map((point) => ({ ...point })),
+    visitedCheckpoints: [],
     collected: 0,
     relicGoal: RELICS.length,
     status: 'playing',
@@ -58,17 +70,23 @@ export function createGame(): TempleState {
 
 function destinationFor(player: Point, direction: Direction): Point {
   const delta: Record<Direction, Point> = {
-    up: { x: 0, y: -1 },
-    down: { x: 0, y: 1 },
-    left: { x: -1, y: 0 },
-    right: { x: 1, y: 0 }
+    up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 }
   };
   return { x: player.x + delta[direction].x, y: player.y + delta[direction].y };
 }
 
+function takeDamage(state: TempleState, message: string): void {
+  if (state.wards > 0) {
+    state.wards -= 1;
+    state.message = `${message} A resin ward absorbs the damage.`;
+    return;
+  }
+  state.health = Math.max(0, state.health - 1);
+  state.message = `${message} You lose 1 health.`;
+}
+
 export function move(state: TempleState, direction: Direction): TempleState {
   if (state.status !== 'playing') return state;
-
   const next = structuredClone(state) as TempleState;
   const target = destinationFor(next.player, direction);
 
@@ -89,16 +107,28 @@ export function move(state: TempleState, direction: Direction): TempleState {
     next.message = `Relic seed recovered. ${next.relicGoal - next.collected} remain.`;
   }
 
+  const wardIndex = next.wardCaches.findIndex((cache) => samePoint(cache, next.player));
+  if (wardIndex >= 0) {
+    next.wardCaches.splice(wardIndex, 1);
+    next.wards += 1;
+    next.message = `Resin ward recovered. ${next.wards} protection charge${next.wards === 1 ? '' : 's'} ready.`;
+  }
+
+  if (hasPoint(next.checkpoints, next.player) && !hasPoint(next.visitedCheckpoints, next.player)) {
+    next.visitedCheckpoints.push({ ...next.player });
+    const before = next.health;
+    next.health = Math.min(next.maxHealth, next.health + 1);
+    next.message = before === next.health ? 'Sanctuary checkpoint secured.' : 'Sanctuary checkpoint secured. Health restored by 1.';
+  }
+
   const hazardIndex = next.hazards.findIndex((hazard) => samePoint(hazard, next.player));
   if (hazardIndex >= 0) {
     next.hazards.splice(hazardIndex, 1);
-    next.health = Math.max(0, next.health - 1);
-    next.message = 'Temple trap! You lose 1 health.';
+    takeDamage(next, 'Temple trap!');
   }
 
   if (next.turn > 0 && next.turn % 9 === 0 && next.status === 'playing') {
-    next.health = Math.max(0, next.health - 1);
-    next.message = 'The temple surges. You lose 1 health.';
+    takeDamage(next, 'The temple surges.');
   }
 
   if (next.health <= 0) {
@@ -115,14 +145,15 @@ export function move(state: TempleState, direction: Direction): TempleState {
       next.message = `The vault gate rejects you. ${next.relicGoal - next.collected} relic seed${next.relicGoal - next.collected === 1 ? '' : 's'} still missing.`;
     }
   }
-
   return next;
 }
 
-export function tileKind(state: TempleState, point: Point): 'wall' | 'relic' | 'hazard' | 'exit' | 'floor' {
+export function tileKind(state: TempleState, point: Point): 'wall' | 'relic' | 'hazard' | 'ward' | 'checkpoint' | 'exit' | 'floor' {
   if (hasPoint(state.walls, point)) return 'wall';
   if (hasPoint(state.relics, point)) return 'relic';
   if (hasPoint(state.hazards, point)) return 'hazard';
+  if (hasPoint(state.wardCaches, point)) return 'ward';
+  if (hasPoint(state.checkpoints, point)) return 'checkpoint';
   if (samePoint(state.exit, point)) return 'exit';
   return 'floor';
 }
