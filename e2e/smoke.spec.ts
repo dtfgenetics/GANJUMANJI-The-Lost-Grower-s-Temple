@@ -59,6 +59,30 @@ test('renders low-chrome campaign HUD, journal drawer, saves, and restart flow',
   expect(errors).toEqual([]);
 });
 
+test('loss result can restore the last automatic checkpoint', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chrome', 'Checkpoint-loss sequence only needs the desktop project.');
+  await page.goto('/games/ganjumanji/');
+
+  for (const key of ['ArrowRight', 'ArrowRight', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight']) {
+    await page.keyboard.press(key);
+  }
+  await expect(page.locator('#turns')).toHaveText('9');
+  await expect(page.locator('#health')).toHaveText('1 / 3');
+
+  for (const key of ['ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'ArrowLeft']) {
+    await page.keyboard.press(key);
+  }
+
+  await expect(page.locator('#resultModal')).toBeVisible();
+  await expect(page.locator('#resultTitle')).toHaveText('The Temple Claimed This Run');
+  await expect(page.getByRole('button', { name: 'Continue from Checkpoint', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Continue from Checkpoint', exact: true }).click();
+  await expect(page.locator('#resultModal')).toBeHidden();
+  await expect(page.locator('#turns')).toHaveText('17');
+  await expect(page.locator('#health')).toHaveText('1 / 3');
+  await expect(page.locator('#saveStatus')).toHaveText('Save restored');
+});
+
 test('touch movement and journal stay usable on mobile', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile-chrome', 'Touch control check only needs the mobile project.');
   await page.goto('/games/ganjumanji/');
