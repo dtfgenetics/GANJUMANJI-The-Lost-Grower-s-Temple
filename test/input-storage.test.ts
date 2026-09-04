@@ -19,11 +19,30 @@ describe('Ganjumanji input mapping', () => {
 });
 
 describe('Ganjumanji save boundary', () => {
-  it('round-trips expedition simulation state', () => {
-    const advanced = move(createGame(), 'right');
+  it('round-trips progression-aware expedition state', () => {
+    const state = createGame();
+    state.wards = 2;
+    state.visitedCheckpoints = [{ x: 1, y: 3 }];
+    const advanced = move(state, 'right');
     const restored = parseExpedition(serializeExpedition(advanced));
     expect(restored).toEqual(advanced);
     expect(restored).not.toBe(advanced);
+  });
+
+  it('migrates version 1 saves without progression fields', () => {
+    const legacy = createGame();
+    const legacyState = { ...legacy } as Record<string, unknown>;
+    delete legacyState.maxHealth;
+    delete legacyState.wards;
+    delete legacyState.wardCaches;
+    delete legacyState.checkpoints;
+    delete legacyState.visitedCheckpoints;
+    const restored = parseExpedition(JSON.stringify({ version: 1, state: legacyState }));
+    expect(restored?.maxHealth).toBe(3);
+    expect(restored?.wards).toBe(0);
+    expect(restored?.wardCaches).toEqual([]);
+    expect(restored?.checkpoints).toEqual([]);
+    expect(restored?.visitedCheckpoints).toEqual([]);
   });
 
   it('rejects malformed or unsupported saves', () => {
