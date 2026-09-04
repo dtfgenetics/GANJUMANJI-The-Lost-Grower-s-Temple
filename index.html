@@ -16,7 +16,11 @@
         <h1>Ganjumanji</h1>
         <p>The Lost Grower's Temple</p>
       </div>
-      <button id="restartButton" type="button">Restart Expedition</button>
+      <div class="topbar-actions" aria-label="Expedition controls">
+        <button id="continueButton" type="button">Continue</button>
+        <button id="saveButton" type="button">Save</button>
+        <button id="restartButton" type="button">Restart Expedition</button>
+      </div>
     </header>
 
     <section class="hud" aria-label="Expedition status">
@@ -29,7 +33,10 @@
     <section class="play-layout">
       <div class="game-panel">
         <div id="game" aria-label="Ganjumanji temple board"></div>
-        <p id="message" class="message" aria-live="polite"></p>
+        <div class="status-row">
+          <p id="message" class="message" aria-live="polite"></p>
+          <span id="saveStatus" class="save-status" aria-live="polite">Autosave ready</span>
+        </div>
       </div>
 
       <aside class="guide">
@@ -38,9 +45,11 @@
         <p>Find all three glowing relic seeds, then reach the vault gate before the temple drains your health.</p>
         <ul>
           <li>Arrow keys or WASD move.</li>
+          <li>Press R to restart the expedition.</li>
           <li>Stone walls block movement.</li>
           <li>Red trap tiles cost health once.</li>
           <li>The temple surges every 9 successful moves.</li>
+          <li>Successful moves create a local checkpoint save.</li>
         </ul>
       </aside>
     </section>
