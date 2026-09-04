@@ -49,12 +49,13 @@ function enterRegion(state: TempleState, regionId: RegionId): void {
   const nextRegion = REGIONS[regionId];
   const carriedTools = state.tools;
   const carriedWards = state.wards;
+  const recoveredHealth = Math.min(state.maxHealth, state.health + 1);
   Object.assign(state, regionState(regionId));
   state.tools = carriedTools;
   state.wards = carriedWards;
-  state.health = state.maxHealth;
+  state.health = recoveredHealth;
   state.regionId = regionId;
-  state.message = `${nextRegion.name}: ${nextRegion.subtitle} Safe passage fully restores health. ${nextRegion.pressureLabel}.`;
+  state.message = `${nextRegion.name}: ${nextRegion.subtitle} Safe passage restores 1 health. ${nextRegion.pressureLabel}.`;
 }
 
 function clearCurrentRegion(state: TempleState): void {
