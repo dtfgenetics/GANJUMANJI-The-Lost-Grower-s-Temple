@@ -31,6 +31,10 @@ test('renders low-chrome campaign HUD, journal drawer, saves, and restart flow',
   await expect(page.getByText(/cleared passages restore 1 health/i)).toBeVisible();
   await expect(page.locator('[data-region-step="root_halls"]')).toHaveAttribute('data-state', 'current');
   await expect(page.getByRole('button', { name: 'Close journal', exact: true }).first()).toBeFocused();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator('#turns')).toHaveText('0');
+  await page.keyboard.press('r');
+  await expect(page.locator('#turns')).toHaveText('0');
   await page.keyboard.press('Escape');
   await expect(journal).toHaveAttribute('aria-hidden', 'true');
   await expect(journalButton).toBeFocused();
@@ -88,11 +92,14 @@ test('touch movement and journal stay usable on mobile', async ({ page }, testIn
   await expect(page.locator('#regionName')).toHaveText('The Root Halls');
   await expect(page.locator('#tools')).toHaveText('0');
   await expect(page.locator('#guardians')).toHaveText('1');
+  const moveRight = page.getByRole('button', { name: 'Move right', exact: true });
   await page.getByRole('button', { name: 'Journal', exact: true }).click();
   await expect(page.locator('#guidePanel')).toHaveAttribute('aria-hidden', 'false');
+  await expect(moveRight).toBeDisabled();
   await page.getByRole('button', { name: 'Close journal', exact: true }).first().click();
   await expect(page.locator('#guidePanel')).toHaveAttribute('aria-hidden', 'true');
-  await page.getByRole('button', { name: 'Move right', exact: true }).click();
+  await expect(moveRight).toBeEnabled();
+  await moveRight.click();
   await expect(page.locator('#turns')).toHaveText('1');
   await expect(page.locator('#saveStatus')).toHaveText('Checkpoint saved');
   await page.screenshot({ path: testInfo.outputPath('ganjumanji-mobile.png'), fullPage: true });
