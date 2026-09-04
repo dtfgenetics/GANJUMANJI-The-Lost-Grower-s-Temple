@@ -12,7 +12,7 @@
   <main class="game-shell">
     <header class="topbar">
       <div>
-        <span class="eyebrow">DTF Genetics · Development Build</span>
+        <span class="eyebrow">DTF Genetics · Playable Campaign Build</span>
         <h1>Ganjumanji</h1>
         <p>The Lost Grower's Temple</p>
       </div>
@@ -25,15 +25,20 @@
 
     <section class="hud" aria-label="Expedition status">
       <div><span>Health</span><strong id="health">3 / 3</strong></div>
-      <div><span>Relic Seeds</span><strong id="relics">0 / 3</strong></div>
+      <div><span>Campaign Relics</span><strong id="relics">0 / 6</strong></div>
       <div><span>Resin Wards</span><strong id="wards">0</strong></div>
-      <div><span>Sanctuaries</span><strong id="checkpoints">0 / 2</strong></div>
+      <div><span>Regions Cleared</span><strong id="regions">0 / 3</strong></div>
       <div><span>Danger</span><strong id="danger">0 / 10</strong></div>
       <div><span>Moves</span><strong id="turns">0</strong></div>
     </section>
 
     <section class="play-layout">
       <div class="game-panel">
+        <div class="region-strip">
+          <div><span class="eyebrow">Current Region</span><strong id="regionName">The Root Halls</strong></div>
+          <div class="region-goal"><span>Local Relics</span><strong id="regionRelics">0 / 3</strong></div>
+          <div class="region-goal"><span>Sanctuaries</span><strong id="checkpoints">0 / 2</strong></div>
+        </div>
         <div id="game" aria-label="Ganjumanji temple board"></div>
         <div class="status-row">
           <p id="message" class="message" aria-live="polite"></p>
@@ -43,17 +48,25 @@
 
       <aside class="guide">
         <span class="eyebrow">Expedition Goal</span>
-        <h2>Recover. Survive. Escape.</h2>
-        <p>Find all three glowing relic seeds, then reach the vault gate before the temple drains your health.</p>
-        <ul>
-          <li>Arrow keys or WASD move. Press R to restart.</li>
-          <li>Stone walls block movement.</li>
-          <li>Red trap tiles trigger once.</li>
-          <li>Golden ward caches absorb one future damage.</li>
-          <li>Blue sanctuaries restore health once and mark route progress.</li>
-          <li>The temple surges every 9 successful moves.</li>
-          <li>Successful moves create a local checkpoint save.</li>
-        </ul>
+        <h2 id="regionTitle">The Root Halls</h2>
+        <p id="regionDescription">Recover every relic seed in this chamber and reach the sealed passage.</p>
+        <div class="campaign-path" aria-label="Temple campaign route">
+          <span data-region-step="root_halls">1 · Root Halls</span>
+          <span data-region-step="sunken_archive">2 · Sunken Archive</span>
+          <span data-region-step="vault_heart">3 · Vault Heart</span>
+        </div>
+        <details>
+          <summary>Controls & survival rules</summary>
+          <ul>
+            <li>Arrow keys or WASD move. Press R to restart.</li>
+            <li>Stone walls block movement.</li>
+            <li>Red trap tiles trigger once.</li>
+            <li>Golden ward caches absorb one future damage.</li>
+            <li>Blue sanctuaries restore health once.</li>
+            <li>The temple surges every 9 successful moves in a region.</li>
+            <li>Successful moves create a local checkpoint save.</li>
+          </ul>
+        </details>
       </aside>
     </section>
 
