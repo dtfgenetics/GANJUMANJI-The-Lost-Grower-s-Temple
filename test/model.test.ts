@@ -75,7 +75,7 @@ describe('Ganjumanji temple model', () => {
     const transitioned = move(state, 'up');
     expect(transitioned.status).toBe('playing'); expect(transitioned.regionId).toBe('sunken_archive');
     expect(transitioned.regionsCleared).toEqual(['root_halls']); expect(transitioned.tools).toBe(1); expect(transitioned.wards).toBe(1); expect(transitioned.relicGoal).toBe(2);
-    expect(transitioned.health).toBe(3); expect(transitioned.message).toMatch(/fully restores health/i); expect(transitioned.message).toMatch(/surge every 7 moves/i);
+    expect(transitioned.health).toBe(3); expect(transitioned.message).toMatch(/restores full health/i); expect(transitioned.message).toMatch(/surge every 7 moves/i);
   });
 
   it('wins only after the final Vault Heart relic and exit are secured', () => {
