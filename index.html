@@ -63,7 +63,7 @@
           </div>
           <button id="closeJournalButton" type="button" aria-label="Close journal">×</button>
         </div>
-        <p id="journalRegionDescription">Recover every relic seed in this chamber and reach the sealed passage.</p>
+        <p>Recover every relic seed in the current chamber and reach its sealed passage.</p>
         <div class="campaign-path" aria-label="Temple campaign route">
           <span data-region-step="root_halls">1 · Root Halls</span>
           <span data-region-step="sunken_archive">2 · Sunken Archive</span>
@@ -112,5 +112,32 @@
       <button id="playAgainButton" type="button">Play Again</button>
     </div>
   </section>
+
+  <script>
+    (() => {
+      const journal = document.getElementById('guidePanel');
+      const openButton = document.getElementById('journalButton');
+      const closeButton = document.getElementById('closeJournalButton');
+      const backdrop = document.getElementById('journalBackdrop');
+      const setOpen = (open) => {
+        journal.dataset.open = String(open);
+        journal.setAttribute('aria-hidden', String(!open));
+        openButton.setAttribute('aria-expanded', String(open));
+        backdrop.hidden = !open;
+        if (open) closeButton.focus();
+        else openButton.focus();
+      };
+      openButton.addEventListener('click', () => setOpen(journal.dataset.open !== 'true'));
+      closeButton.addEventListener('click', () => setOpen(false));
+      backdrop.addEventListener('click', () => setOpen(false));
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && journal.dataset.open === 'true') {
+          event.preventDefault();
+          event.stopPropagation();
+          setOpen(false);
+        }
+      }, true);
+    })();
+  </script>
 </body>
 </html>
