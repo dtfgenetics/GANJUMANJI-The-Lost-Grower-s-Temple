@@ -21,38 +21,26 @@ describe('Ganjumanji input mapping', () => {
 describe('Ganjumanji save boundary', () => {
   it('round-trips progression-aware campaign state', () => {
     const state = createGame();
-    state.wards = 2;
-    state.visitedCheckpoints = [{ x: 1, y: 3 }];
+    state.wards = 2; state.tools = 1; state.visitedCheckpoints = [{ x: 1, y: 3 }];
     const advanced = move(state, 'right');
     const restored = parseExpedition(serializeExpedition(advanced));
-    expect(restored).toEqual(advanced);
-    expect(restored).not.toBe(advanced);
-    expect(restored?.regionId).toBe('root_halls');
-    expect(restored?.campaignRelicGoal).toBe(6);
+    expect(restored).toEqual(advanced); expect(restored).not.toBe(advanced);
+    expect(restored?.regionId).toBe('root_halls'); expect(restored?.campaignRelicGoal).toBe(6); expect(restored?.tools).toBe(1);
   });
 
-  it('migrates version 1 saves into the Root Halls campaign', () => {
+  it('migrates version 1 saves into the current campaign safely', () => {
     const legacy = createGame();
     const legacyState = { ...legacy } as Record<string, unknown>;
-    for (const field of ['maxHealth','wards','wardCaches','checkpoints','visitedCheckpoints','regionId','regionTurn','campaignCollected','campaignRelicGoal','regionsCleared']) {
-      delete legacyState[field];
-    }
+    for (const field of ['maxHealth','wards','tools','wardCaches','toolCaches','guardians','checkpoints','visitedCheckpoints','regionId','regionTurn','campaignCollected','campaignRelicGoal','regionsCleared']) delete legacyState[field];
     const restored = parseExpedition(JSON.stringify({ version: 1, state: legacyState }));
-    expect(restored?.maxHealth).toBe(3);
-    expect(restored?.wards).toBe(0);
-    expect(restored?.wardCaches).toEqual([]);
-    expect(restored?.checkpoints).toEqual([]);
-    expect(restored?.visitedCheckpoints).toEqual([]);
-    expect(restored?.regionId).toBe('root_halls');
-    expect(restored?.regionTurn).toBe(0);
-    expect(restored?.campaignCollected).toBe(0);
-    expect(restored?.campaignRelicGoal).toBe(6);
-    expect(restored?.regionsCleared).toEqual([]);
+    expect(restored?.maxHealth).toBe(3); expect(restored?.wards).toBe(0); expect(restored?.tools).toBe(0);
+    expect(restored?.toolCaches.length).toBeGreaterThan(0); expect(restored?.guardians.length).toBeGreaterThan(0);
+    expect(restored?.regionId).toBe('root_halls'); expect(restored?.regionTurn).toBe(0);
+    expect(restored?.campaignCollected).toBe(0); expect(restored?.campaignRelicGoal).toBe(6); expect(restored?.regionsCleared).toEqual([]);
   });
 
   it('rejects malformed or unsupported saves', () => {
-    expect(parseExpedition(null)).toBeNull();
-    expect(parseExpedition('{bad-json')).toBeNull();
+    expect(parseExpedition(null)).toBeNull(); expect(parseExpedition('{bad-json')).toBeNull();
     expect(parseExpedition(JSON.stringify({ version: 99, state: createGame() }))).toBeNull();
     expect(parseExpedition(JSON.stringify({ version: 1, state: { health: 3 } }))).toBeNull();
   });
