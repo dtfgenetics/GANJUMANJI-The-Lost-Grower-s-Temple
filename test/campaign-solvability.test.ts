@@ -27,9 +27,9 @@ function stateKey(state: TempleState) {
   ].join('::');
 }
 
-function findWinningRoute(maxExplored = 150_000): Direction[] | null {
+function findWinningDepth(maxExplored = 150_000): number | null {
   const start = createGame();
-  const queue: Array<{ state: TempleState; route: Direction[] }> = [{ state: start, route: [] }];
+  const queue: Array<{ state: TempleState; depth: number }> = [{ state: start, depth: 0 }];
   const seen = new Set<string>([stateKey(start)]);
   let cursor = 0;
 
@@ -37,13 +37,13 @@ function findWinningRoute(maxExplored = 150_000): Direction[] | null {
     const current = queue[cursor++];
     for (const direction of DIRECTIONS) {
       const next = move(current.state, direction);
-      if (next.status === 'won') return [...current.route, direction];
+      if (next.status === 'won') return current.depth + 1;
       if (next.status !== 'playing' || next.turn === current.state.turn) continue;
 
       const key = stateKey(next);
       if (seen.has(key)) continue;
       seen.add(key);
-      queue.push({ state: next, route: [...current.route, direction] });
+      queue.push({ state: next, depth: current.depth + 1 });
     }
   }
 
@@ -52,9 +52,9 @@ function findWinningRoute(maxExplored = 150_000): Direction[] | null {
 
 describe('Ganjumanji campaign solvability', () => {
   it('keeps at least one survivable route through every region and the final vault', () => {
-    const route = findWinningRoute();
-    expect(route, 'campaign balance must preserve a complete survivable route').not.toBeNull();
-    expect(route!.length).toBeGreaterThan(0);
-    expect(route!.length).toBeLessThan(220);
+    const depth = findWinningDepth();
+    expect(depth, 'campaign balance must preserve a complete survivable route').not.toBeNull();
+    expect(depth!).toBeGreaterThan(0);
+    expect(depth!).toBeLessThan(220);
   });
 });
