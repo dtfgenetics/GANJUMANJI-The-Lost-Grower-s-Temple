@@ -10,6 +10,8 @@ let sceneRef: TempleScene | null = null;
 
 const health = document.querySelector('#health') as HTMLElement;
 const relics = document.querySelector('#relics') as HTMLElement;
+const wards = document.querySelector('#wards') as HTMLElement;
+const checkpoints = document.querySelector('#checkpoints') as HTMLElement;
 const danger = document.querySelector('#danger') as HTMLElement;
 const turns = document.querySelector('#turns') as HTMLElement;
 const message = document.querySelector('#message') as HTMLElement;
@@ -23,8 +25,10 @@ function getStorage(): Storage | null {
 }
 
 function syncHud() {
-  health.textContent = String(state.health);
+  health.textContent = `${state.health} / ${state.maxHealth}`;
   relics.textContent = `${state.collected} / ${state.relicGoal}`;
+  wards.textContent = String(state.wards);
+  checkpoints.textContent = `${state.visitedCheckpoints.length} / ${state.checkpoints.length}`;
   danger.textContent = `${state.danger} / 10`;
   turns.textContent = String(state.turn);
   message.textContent = state.message;
@@ -109,6 +113,13 @@ class TempleScene extends Phaser.Scene {
           this.graphics.lineStyle(3, 0xfff1a6, 1).strokeCircle(x * TILE + TILE / 2, y * TILE + TILE / 2, 20);
         } else if (kind === 'hazard') {
           this.graphics.fillStyle(0x8c342d, .95).fillTriangle(x * TILE + 12, y * TILE + 52, x * TILE + 32, y * TILE + 12, x * TILE + 52, y * TILE + 52);
+        } else if (kind === 'ward') {
+          this.graphics.fillStyle(0xc78f35, 1).fillRoundedRect(x * TILE + 17, y * TILE + 17, 30, 30, 8);
+          this.graphics.lineStyle(3, 0xffdf85, 1).strokeRoundedRect(x * TILE + 14, y * TILE + 14, 36, 36, 10);
+        } else if (kind === 'checkpoint') {
+          const visited = next.visitedCheckpoints.some(point => point.x === x && point.y === y);
+          this.graphics.fillStyle(visited ? 0x315f56 : 0x3c7c8f, 1).fillCircle(x * TILE + TILE / 2, y * TILE + TILE / 2, 20);
+          this.graphics.lineStyle(4, visited ? 0x7db7a7 : 0xaee8ff, 1).strokeCircle(x * TILE + TILE / 2, y * TILE + TILE / 2, 24);
         } else if (kind === 'exit') {
           this.graphics.fillStyle(0x4a8b70, 1).fillRoundedRect(x * TILE + 11, y * TILE + 8, 42, 48, 8);
           this.graphics.lineStyle(4, 0xd9bd72, 1).strokeRoundedRect(x * TILE + 11, y * TILE + 8, 42, 48, 8);
@@ -117,7 +128,7 @@ class TempleScene extends Phaser.Scene {
     }
 
     this.player.setPosition(next.player.x * TILE + TILE / 2, next.player.y * TILE + TILE / 2);
-    this.statusText.setText(next.status === 'won' ? 'VAULT ESCAPED' : next.status === 'lost' ? 'EXPEDITION LOST' : `RELICS ${next.collected}/${next.relicGoal}`);
+    this.statusText.setText(next.status === 'won' ? 'VAULT ESCAPED' : next.status === 'lost' ? 'EXPEDITION LOST' : `RELICS ${next.collected}/${next.relicGoal} · WARDS ${next.wards}`);
   }
 }
 
