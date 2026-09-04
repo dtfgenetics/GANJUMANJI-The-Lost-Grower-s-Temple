@@ -14,6 +14,7 @@ test('renders low-chrome campaign HUD, journal drawer, saves, and restart flow',
   await expect(page.locator('#regionRelics')).toHaveText('0 / 3');
   await expect(page.locator('#wards')).toHaveText('0');
   await expect(page.locator('#tools')).toHaveText('0');
+  await expect(page.locator('#guardians')).toHaveText('1');
   await expect(page.locator('#regions')).toHaveText('0 / 3');
   await expect(page.locator('#checkpoints')).toHaveText('0 / 2');
   await expect(page.locator('#turns')).toHaveText('0');
@@ -27,6 +28,7 @@ test('renders low-chrome campaign HUD, journal drawer, saves, and restart flow',
   await expect(journalButton).toHaveAttribute('aria-expanded', 'true');
   await expect(page.locator('#pressureHint')).toContainText('surge every 9 moves');
   await expect(page.getByText(/expedition kits automatically neutralize/i)).toBeVisible();
+  await expect(page.getByText(/cleared passages restore 1 health/i)).toBeVisible();
   await expect(page.locator('[data-region-step="root_halls"]')).toHaveAttribute('data-state', 'current');
   await expect(page.getByRole('button', { name: 'Close journal', exact: true }).first()).toBeFocused();
   await page.keyboard.press('Escape');
@@ -55,6 +57,7 @@ test('renders low-chrome campaign HUD, journal drawer, saves, and restart flow',
   await page.getByRole('button', { name: 'Restart', exact: true }).click();
   await expect(page.locator('#turns')).toHaveText('0');
   await expect(page.locator('#tools')).toHaveText('0');
+  await expect(page.locator('#guardians')).toHaveText('1');
   await expect(page.getByRole('button', { name: 'Continue', exact: true })).toBeDisabled();
   expect(errors).toEqual([]);
 });
@@ -63,15 +66,11 @@ test('loss result can restore the last automatic checkpoint', async ({ page }, t
   test.skip(testInfo.project.name === 'mobile-chrome', 'Checkpoint-loss sequence only needs the desktop project.');
   await page.goto('/games/ganjumanji/');
 
-  for (const key of ['ArrowRight', 'ArrowRight', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight']) {
-    await page.keyboard.press(key);
-  }
+  for (const key of ['ArrowRight', 'ArrowRight', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight']) await page.keyboard.press(key);
   await expect(page.locator('#turns')).toHaveText('9');
   await expect(page.locator('#health')).toHaveText('1 / 3');
 
-  for (const key of ['ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'ArrowLeft']) {
-    await page.keyboard.press(key);
-  }
+  for (const key of ['ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'ArrowLeft']) await page.keyboard.press(key);
 
   await expect(page.locator('#resultModal')).toBeVisible();
   await expect(page.locator('#resultTitle')).toHaveText('The Temple Claimed This Run');
@@ -88,6 +87,7 @@ test('touch movement and journal stay usable on mobile', async ({ page }, testIn
   await page.goto('/games/ganjumanji/');
   await expect(page.locator('#regionName')).toHaveText('The Root Halls');
   await expect(page.locator('#tools')).toHaveText('0');
+  await expect(page.locator('#guardians')).toHaveText('1');
   await page.getByRole('button', { name: 'Journal', exact: true }).click();
   await expect(page.locator('#guidePanel')).toHaveAttribute('aria-hidden', 'false');
   await page.getByRole('button', { name: 'Close journal', exact: true }).first().click();
