@@ -69,13 +69,13 @@ describe('Ganjumanji temple model', () => {
     const atGate = move(state, 'up'); expect(atGate.status).toBe('playing'); expect(atGate.regionId).toBe('root_halls'); expect(atGate.message).toMatch(/still missing/i);
   });
 
-  it('clears Root Halls into Sunken Archive, carries tools, and restores one health', () => {
+  it('clears Root Halls into Sunken Archive, carries resources, and fully restores health', () => {
     const state = createGame();
-    state.player = { x: 9, y: 2 }; state.collected = 3; state.campaignCollected = 3; state.relics = []; state.tools = 1; state.health = 1;
+    state.player = { x: 9, y: 2 }; state.collected = 3; state.campaignCollected = 3; state.relics = []; state.tools = 1; state.wards = 1; state.health = 1;
     const transitioned = move(state, 'up');
     expect(transitioned.status).toBe('playing'); expect(transitioned.regionId).toBe('sunken_archive');
-    expect(transitioned.regionsCleared).toEqual(['root_halls']); expect(transitioned.tools).toBe(1); expect(transitioned.relicGoal).toBe(2);
-    expect(transitioned.health).toBe(2); expect(transitioned.message).toMatch(/restores 1 health/i); expect(transitioned.message).toMatch(/surge every 7 moves/i);
+    expect(transitioned.regionsCleared).toEqual(['root_halls']); expect(transitioned.tools).toBe(1); expect(transitioned.wards).toBe(1); expect(transitioned.relicGoal).toBe(2);
+    expect(transitioned.health).toBe(3); expect(transitioned.message).toMatch(/fully restores health/i); expect(transitioned.message).toMatch(/surge every 7 moves/i);
   });
 
   it('wins only after the final Vault Heart relic and exit are secured', () => {
