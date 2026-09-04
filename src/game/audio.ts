@@ -1,11 +1,13 @@
 export const AUDIO_PREF_KEY = 'dtf-ganjumanji-audio-v1';
 
-export type AudioCue = 'move' | 'relic' | 'ward' | 'checkpoint' | 'damage' | 'region' | 'win' | 'lose';
+export type AudioCue = 'move' | 'relic' | 'ward' | 'tool' | 'guardian' | 'checkpoint' | 'damage' | 'region' | 'win' | 'lose';
 
 const cueMap: Record<AudioCue, { frequency: number; duration: number; gain: number; second?: number }> = {
   move: { frequency: 180, duration: 0.045, gain: 0.018 },
   relic: { frequency: 720, duration: 0.16, gain: 0.055, second: 980 },
   ward: { frequency: 520, duration: 0.13, gain: 0.045, second: 680 },
+  tool: { frequency: 430, duration: 0.12, gain: 0.045, second: 760 },
+  guardian: { frequency: 230, duration: 0.15, gain: 0.052, second: 460 },
   checkpoint: { frequency: 420, duration: 0.18, gain: 0.045, second: 610 },
   damage: { frequency: 110, duration: 0.18, gain: 0.06 },
   region: { frequency: 330, duration: 0.22, gain: 0.05, second: 660 },
