@@ -6,6 +6,8 @@ export type RegionDefinition = {
   id: RegionId;
   name: string;
   subtitle: string;
+  pressureLabel: string;
+  surgeEvery: number;
   width: number;
   height: number;
   start: Point;
@@ -35,6 +37,8 @@ export const REGIONS: Record<RegionId, RegionDefinition> = {
     id: 'root_halls',
     name: 'The Root Halls',
     subtitle: 'Vines, old stone, and the first relic seals.',
+    pressureLabel: 'Stable · surge every 9 moves',
+    surgeEvery: 9,
     width: 11,
     height: 9,
     start: { x: 1, y: 7 },
@@ -56,6 +60,8 @@ export const REGIONS: Record<RegionId, RegionDefinition> = {
     id: 'sunken_archive',
     name: 'The Sunken Archive',
     subtitle: 'Flooded records and unstable cultivation chambers.',
+    pressureLabel: 'Unstable · surge every 7 moves',
+    surgeEvery: 7,
     width: 11,
     height: 9,
     start: { x: 1, y: 1 },
@@ -77,6 +83,8 @@ export const REGIONS: Record<RegionId, RegionDefinition> = {
     id: 'vault_heart',
     name: 'The Vault Heart',
     subtitle: 'The final chamber where the living seed vault waits.',
+    pressureLabel: 'Critical · surge every 5 moves',
+    surgeEvery: 5,
     width: 11,
     height: 9,
     start: { x: 1, y: 7 },
