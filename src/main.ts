@@ -15,6 +15,7 @@ const health = document.querySelector('#health') as HTMLElement;
 const relics = document.querySelector('#relics') as HTMLElement;
 const wards = document.querySelector('#wards') as HTMLElement;
 const tools = document.querySelector('#tools') as HTMLElement;
+const guardians = document.querySelector('#guardians') as HTMLElement;
 const regions = document.querySelector('#regions') as HTMLElement;
 const checkpoints = document.querySelector('#checkpoints') as HTMLElement;
 const danger = document.querySelector('#danger') as HTMLElement;
@@ -89,6 +90,7 @@ function syncHud() {
   relics.textContent = `${state.campaignCollected} / ${state.campaignRelicGoal}`;
   wards.textContent = String(state.wards);
   tools.textContent = String(state.tools);
+  guardians.textContent = String(state.guardians.length);
   regions.textContent = `${state.regionsCleared.length} / 3`;
   checkpoints.textContent = `${state.visitedCheckpoints.length} / ${state.checkpoints.length}`;
   danger.textContent = `${state.danger} / 10`;
