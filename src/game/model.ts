@@ -92,7 +92,7 @@ function enterRegion(state: TempleState, regionId: RegionId): void {
   const nextRegion = REGIONS[regionId];
   Object.assign(state, regionState(regionId));
   state.regionId = regionId;
-  state.message = `${nextRegion.name}: ${nextRegion.subtitle}`;
+  state.message = `${nextRegion.name}: ${nextRegion.subtitle} ${nextRegion.pressureLabel}.`;
 }
 
 function clearCurrentRegion(state: TempleState): void {
@@ -119,7 +119,8 @@ export function move(state: TempleState, direction: Direction): TempleState {
   next.player = target;
   next.turn += 1;
   next.regionTurn += 1;
-  next.danger = Math.min(10, Math.floor(next.regionTurn / 3));
+  const region = REGIONS[next.regionId];
+  next.danger = Math.min(10, Math.floor((next.regionTurn / region.surgeEvery) * 3));
   next.message = 'The temple shifts around you.';
 
   const relicIndex = next.relics.findIndex((relic) => samePoint(relic, next.player));
@@ -127,7 +128,7 @@ export function move(state: TempleState, direction: Direction): TempleState {
     next.relics.splice(relicIndex, 1);
     next.collected += 1;
     next.campaignCollected += 1;
-    next.message = `Relic seed recovered. ${next.relicGoal - next.collected} remain in ${REGIONS[next.regionId].name}.`;
+    next.message = `Relic seed recovered. ${next.relicGoal - next.collected} remain in ${region.name}.`;
   }
 
   const wardIndex = next.wardCaches.findIndex((cache) => samePoint(cache, next.player));
@@ -150,8 +151,8 @@ export function move(state: TempleState, direction: Direction): TempleState {
     takeDamage(next, 'Temple trap!');
   }
 
-  if (next.regionTurn > 0 && next.regionTurn % 9 === 0 && next.status === 'playing') {
-    takeDamage(next, 'The temple surges.');
+  if (next.regionTurn > 0 && next.regionTurn % region.surgeEvery === 0 && next.status === 'playing') {
+    takeDamage(next, `${region.name} surges.`);
   }
 
   if (next.health <= 0) {
