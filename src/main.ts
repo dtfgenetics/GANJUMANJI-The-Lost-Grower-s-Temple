@@ -152,7 +152,7 @@ function dispatch(action: GameAction | null) {
 
 class TempleScene extends Phaser.Scene {
   private graphics!: Phaser.GameObjects.Graphics;
-  private player!: Phaser.GameObjects.Arc;
+  private player!: Phaser.GameObjects.Container;
   private statusText!: Phaser.GameObjects.Text;
   private lastRegionId: RegionId | null = null;
   private lastPlayer: { x: number; y: number } | null = null;
@@ -164,13 +164,41 @@ class TempleScene extends Phaser.Scene {
     sceneRef = this;
     this.reducedMotion = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
     this.graphics = this.add.graphics();
-    this.player = this.add.circle(0, 0, TILE * .26, 0xf5df8e).setStrokeStyle(4, 0x1f472c).setDepth(4);
+    this.player = this.createSeedExplorer();
     this.statusText = this.add.text(14, 12, '', {
       fontFamily: 'system-ui, sans-serif', fontSize: '20px', fontStyle: 'bold',
       color: '#fff5cf', backgroundColor: '#07110bcc', padding: { x: 10, y: 6 }
     }).setDepth(5);
     this.input.keyboard?.on('keydown', (event: KeyboardEvent) => dispatch(actionFromKeyboard(event)));
     this.renderState(state);
+  }
+
+  private createSeedExplorer() {
+    const body = this.add.ellipse(0, 2, 31, 39, 0xb98255).setStrokeStyle(3, 0x2b1d13);
+    const belly = this.add.ellipse(2, 5, 18, 25, 0xd9a878, 0.5);
+    const eyeLeft = this.add.circle(-6, -4, 2.2, 0x15100c);
+    const eyeRight = this.add.circle(6, -4, 2.2, 0x15100c);
+    const smile = this.add.arc(0, 1, 6, 18, 162, false, 0x000000, 0).setStrokeStyle(2, 0x2b1d13);
+    const stem = this.add.rectangle(0, -23, 3, 10, 0x4f8b4c).setRotation(-0.08);
+    const leafLeft = this.add.ellipse(-6, -29, 12, 7, 0x62a85d).setRotation(-0.42);
+    const leafRight = this.add.ellipse(6, -30, 12, 7, 0x70b96a).setRotation(0.35);
+    const explorer = this.add.container(0, 0, [stem, leafLeft, leafRight, body, belly, eyeLeft, eyeRight, smile]);
+    explorer.setDepth(4);
+    return explorer;
+  }
+
+  private drawFloorDetail(regionId: RegionId, x: number, y: number) {
+    const cx = x * TILE + TILE / 2;
+    const cy = y * TILE + TILE / 2;
+    if (regionId === 'root_halls' && (x * 3 + y) % 5 === 0) {
+      this.graphics.lineStyle(2, 0x4f7b4f, 0.35).beginPath().moveTo(cx - 18, cy + 22).lineTo(cx - 6, cy + 8).lineTo(cx + 4, cy + 13).strokePath();
+      this.graphics.fillStyle(0x69945f, 0.32).fillEllipse(cx - 7, cy + 8, 9, 5);
+    } else if (regionId === 'sunken_archive' && (x + y * 2) % 4 === 0) {
+      this.graphics.lineStyle(2, 0x80c9cf, 0.25).strokeEllipse(cx, cy + 15, 30, 8).strokeEllipse(cx, cy + 15, 18, 5);
+    } else if (regionId === 'vault_heart' && (x + y) % 3 === 0) {
+      this.graphics.lineStyle(2, 0xe0b95e, 0.2).strokeRect(cx - 7, cy - 7, 14, 14);
+      this.graphics.fillStyle(0xf0d57f, 0.24).fillCircle(cx, cy, 3);
+    }
   }
 
   private positionPlayer(next: TempleState) {
@@ -206,6 +234,7 @@ class TempleScene extends Phaser.Scene {
         const kind = tileKind(next, { x, y });
         const fill = kind === 'wall' ? region.palette.wall : ((x + y) % 2 ? region.palette.floorA : region.palette.floorB);
         this.graphics.fillStyle(fill, 1).fillRect(x * TILE, y * TILE, TILE - 2, TILE - 2);
+        if (kind === 'floor') this.drawFloorDetail(next.regionId, x, y);
         if (kind === 'relic') {
           this.graphics.fillStyle(0xe8c766, 1).fillCircle(x * TILE + TILE / 2, y * TILE + TILE / 2, 13);
           this.graphics.lineStyle(3, 0xfff1a6, 1).strokeCircle(x * TILE + TILE / 2, y * TILE + TILE / 2, 20);
