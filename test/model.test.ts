@@ -6,6 +6,9 @@ describe('Ganjumanji temple model', () => {
     const state = createGame();
     expect(state.status).toBe('playing');
     expect(state.health).toBe(3);
+    expect(state.maxHealth).toBe(3);
+    expect(state.wards).toBe(0);
+    expect(state.checkpoints).toHaveLength(2);
     expect(state.relicGoal).toBe(3);
     expect(state.relics).toHaveLength(3);
     expect(state.turn).toBe(0);
@@ -39,6 +42,32 @@ describe('Ganjumanji temple model', () => {
     const leave = move(trapped, 'down');
     const revisit = move(leave, 'up');
     expect(revisit.health).toBe(2);
+  });
+
+  it('collects a resin ward and consumes it before health', () => {
+    const state = createGame();
+    state.player = { x: 1, y: 1 };
+    const warded = move(state, 'right');
+    expect(warded.wards).toBe(1);
+    expect(warded.wardCaches).toHaveLength(1);
+    warded.player = { x: 4, y: 7 };
+    const protectedState = move(warded, 'up');
+    expect(protectedState.wards).toBe(0);
+    expect(protectedState.health).toBe(3);
+    expect(protectedState.message).toMatch(/absorbs the damage/i);
+  });
+
+  it('restores health at a sanctuary only once', () => {
+    const state = createGame();
+    state.health = 1;
+    state.player = { x: 1, y: 4 };
+    const healed = move(state, 'up');
+    expect(healed.health).toBe(2);
+    expect(healed.visitedCheckpoints).toHaveLength(1);
+    const leave = move(healed, 'down');
+    const revisit = move(leave, 'up');
+    expect(revisit.health).toBe(2);
+    expect(revisit.visitedCheckpoints).toHaveLength(1);
   });
 
   it('keeps the vault locked until all relic seeds are recovered', () => {
