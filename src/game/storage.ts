@@ -1,9 +1,10 @@
-import type { TempleState } from './model';
+import { CAMPAIGN_RELIC_GOAL } from './content';
+import { createGame, type TempleState } from './model';
 
 export const SAVE_KEY = 'dtf-ganjumanji-expedition-v1';
 
 export type SavedExpedition = {
-  version: 2;
+  version: 3;
   savedAt: string;
   state: TempleState;
 };
@@ -21,7 +22,7 @@ type LegacyTempleState = Partial<TempleState> & {
 
 export function serializeExpedition(state: TempleState): string {
   const payload: SavedExpedition = {
-    version: 2,
+    version: 3,
     savedAt: new Date().toISOString(),
     state: structuredClone(state)
   };
@@ -40,13 +41,23 @@ function isBaseState(state: Partial<TempleState>): state is LegacyTempleState {
 }
 
 function migrateState(state: LegacyTempleState): TempleState {
+  const fresh = createGame();
+  const campaignCollected = typeof state.campaignCollected === 'number'
+    ? state.campaignCollected
+    : Math.max(0, Number(state.collected ?? 0));
   return {
+    ...fresh,
     ...state,
-    maxHealth: typeof state.maxHealth === 'number' ? state.maxHealth : 3,
+    maxHealth: typeof state.maxHealth === 'number' ? state.maxHealth : fresh.maxHealth,
     wards: typeof state.wards === 'number' ? state.wards : 0,
     wardCaches: Array.isArray(state.wardCaches) ? state.wardCaches : [],
     checkpoints: Array.isArray(state.checkpoints) ? state.checkpoints : [],
-    visitedCheckpoints: Array.isArray(state.visitedCheckpoints) ? state.visitedCheckpoints : []
+    visitedCheckpoints: Array.isArray(state.visitedCheckpoints) ? state.visitedCheckpoints : [],
+    regionId: state.regionId ?? 'root_halls',
+    regionTurn: typeof state.regionTurn === 'number' ? state.regionTurn : state.turn,
+    campaignCollected,
+    campaignRelicGoal: typeof state.campaignRelicGoal === 'number' ? state.campaignRelicGoal : CAMPAIGN_RELIC_GOAL,
+    regionsCleared: Array.isArray(state.regionsCleared) ? state.regionsCleared : []
   } as TempleState;
 }
 
@@ -54,7 +65,7 @@ export function parseExpedition(raw: string | null): TempleState | null {
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as { version?: number; state?: Partial<TempleState> };
-    if (![1, 2].includes(Number(parsed.version)) || !parsed.state || !isBaseState(parsed.state)) return null;
+    if (![1, 2, 3].includes(Number(parsed.version)) || !parsed.state || !isBaseState(parsed.state)) return null;
     return structuredClone(migrateState(parsed.state));
   } catch {
     return null;
