@@ -4,19 +4,21 @@
   "route": "/games/ganjumanji/",
   "runtime": "phaser-vite-typescript",
   "status": "release-candidate",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "players": "1",
   "input": ["keyboard", "touch"],
   "campaign": {
-    "regions": 3,
-    "relicSeeds": 6,
-    "saveVersion": 4,
-    "pressureCurve": [9, 7, 5]
+    "regions": 5,
+    "relicSeeds": 10,
+    "saveVersion": 5,
+    "pressureCurve": [9, 7, 5, 6, 5]
   },
   "features": [
-    "three-region campaign",
-    "local checkpoint saves and loss recovery",
+    "five-region campaign",
+    "separate autosave and safe-checkpoint recovery",
     "versioned save migration",
+    "mid-campaign max-health progression",
+    "exact surge countdown",
     "resin wards",
     "expedition kits",
     "guardian encounters",

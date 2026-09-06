@@ -1,6 +1,6 @@
 import type { Point } from './model';
 
-export type RegionId = 'root_halls' | 'sunken_archive' | 'vault_heart';
+export type RegionId = 'root_halls' | 'sunken_archive' | 'vault_heart' | 'glasshouse_ruins' | 'seed_throne';
 
 export type RegionDefinition = {
   id: RegionId;
@@ -58,9 +58,9 @@ export const REGIONS: Record<RegionId, RegionDefinition> = {
     palette: { floorA: 0x193f46, floorB: 0x17353d, wall: 0x12282d, accent: 0x8ed4cf }
   },
   vault_heart: {
-    id: 'vault_heart', name: 'The Vault Heart', subtitle: 'The final chamber where the living seed vault waits.',
+    id: 'vault_heart', name: 'The Vault Heart', subtitle: 'A living lock guarding the temple’s deeper greenhouse wing.',
     pressureLabel: 'Critical · surge every 5 moves', surgeEvery: 5, width: 11, height: 9,
-    start: { x: 1, y: 7 }, exit: { x: 9, y: 1 }, nextRegion: null,
+    start: { x: 1, y: 7 }, exit: { x: 9, y: 1 }, nextRegion: 'glasshouse_ruins',
     relics: [{ x: 5, y: 2 }],
     hazards: [{ x: 2, y: 6 }, { x: 4, y: 6 }, { x: 6, y: 5 }, { x: 7, y: 3 }, { x: 5, y: 1 }],
     wardCaches: [{ x: 2, y: 7 }, { x: 1, y: 3 }],
@@ -69,7 +69,34 @@ export const REGIONS: Record<RegionId, RegionDefinition> = {
     checkpoints: [{ x: 5, y: 5 }],
     walls: [...border(11, 9), { x: 3, y: 1 }, { x: 3, y: 2 }, { x: 3, y: 3 }, { x: 7, y: 5 }, { x: 7, y: 6 }, { x: 7, y: 7 }, { x: 4, y: 4 }, { x: 5, y: 4 }, { x: 8, y: 2 }],
     palette: { floorA: 0x4a3325, floorB: 0x3e291f, wall: 0x241912, accent: 0xe8c766 }
+  },
+  glasshouse_ruins: {
+    id: 'glasshouse_ruins', name: 'The Glasshouse Ruins', subtitle: 'Broken panes, moonlit canopy beds, and guardians awakened by the open air.',
+    pressureLabel: 'Severe · surge every 6 moves', surgeEvery: 6, width: 11, height: 9,
+    start: { x: 1, y: 1 }, exit: { x: 9, y: 7 }, nextRegion: 'seed_throne',
+    relics: [{ x: 4, y: 1 }, { x: 8, y: 4 }],
+    hazards: [{ x: 3, y: 2 }, { x: 5, y: 5 }, { x: 8, y: 2 }, { x: 3, y: 7 }],
+    wardCaches: [{ x: 2, y: 6 }, { x: 8, y: 6 }],
+    toolCaches: [{ x: 5, y: 2 }],
+    guardians: [{ x: 6, y: 6 }, { x: 7, y: 3 }],
+    checkpoints: [{ x: 1, y: 5 }, { x: 6, y: 3 }],
+    walls: [...border(11, 9), { x: 2, y: 3 }, { x: 3, y: 3 }, { x: 4, y: 3 }, { x: 6, y: 1 }, { x: 6, y: 2 }, { x: 6, y: 4 }, { x: 6, y: 5 }, { x: 8, y: 5 }, { x: 9, y: 5 }, { x: 3, y: 6 }, { x: 4, y: 6 }],
+    palette: { floorA: 0x244a43, floorB: 0x1d3e38, wall: 0x162824, accent: 0xa8dfad }
+  },
+  seed_throne: {
+    id: 'seed_throne', name: 'The Seed Throne', subtitle: 'The hidden crown chamber where the oldest living seed reliquary is bound.',
+    pressureLabel: 'Terminal · surge every 5 moves', surgeEvery: 5, width: 11, height: 9,
+    start: { x: 1, y: 7 }, exit: { x: 9, y: 1 }, nextRegion: null,
+    relics: [{ x: 2, y: 2 }, { x: 8, y: 6 }],
+    hazards: [{ x: 2, y: 6 }, { x: 4, y: 6 }, { x: 6, y: 5 }, { x: 8, y: 3 }, { x: 5, y: 1 }],
+    wardCaches: [{ x: 1, y: 3 }, { x: 7, y: 6 }, { x: 8, y: 1 }],
+    toolCaches: [{ x: 3, y: 2 }, { x: 6, y: 2 }],
+    guardians: [{ x: 5, y: 6 }, { x: 7, y: 2 }, { x: 8, y: 5 }],
+    checkpoints: [{ x: 5, y: 4 }],
+    walls: [...border(11, 9), { x: 3, y: 1 }, { x: 3, y: 3 }, { x: 3, y: 4 }, { x: 3, y: 5 }, { x: 5, y: 3 }, { x: 5, y: 5 }, { x: 7, y: 3 }, { x: 7, y: 4 }, { x: 7, y: 5 }, { x: 8, y: 2 }],
+    palette: { floorA: 0x3f294b, floorB: 0x34233e, wall: 0x211726, accent: 0xf0cf72 }
   }
 };
 
+export const CAMPAIGN_REGION_GOAL = Object.keys(REGIONS).length;
 export const CAMPAIGN_RELIC_GOAL = Object.values(REGIONS).reduce((sum, region) => sum + region.relics.length, 0);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { REGIONS } from '../src/game/content';
+import { CAMPAIGN_REGION_GOAL, CAMPAIGN_RELIC_GOAL, REGIONS } from '../src/game/content';
 import type { Point } from '../src/game/model';
 
 const key = (point: Point) => `${point.x},${point.y}`;
@@ -23,6 +23,16 @@ function reachablePoints(width: number, height: number, start: Point, walls: Poi
 }
 
 describe('Ganjumanji campaign content', () => {
+  it('defines a complete five-region chain with ten relic seeds', () => {
+    expect(CAMPAIGN_REGION_GOAL).toBe(5);
+    expect(CAMPAIGN_RELIC_GOAL).toBe(10);
+    expect(REGIONS.root_halls.nextRegion).toBe('sunken_archive');
+    expect(REGIONS.sunken_archive.nextRegion).toBe('vault_heart');
+    expect(REGIONS.vault_heart.nextRegion).toBe('glasshouse_ruins');
+    expect(REGIONS.glasshouse_ruins.nextRegion).toBe('seed_throne');
+    expect(REGIONS.seed_throne.nextRegion).toBeNull();
+  });
+
   for (const region of Object.values(REGIONS)) {
     it(`${region.name} keeps every required gameplay tile valid and reachable`, () => {
       const wallKeys = new Set(region.walls.map(key));

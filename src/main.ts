@@ -1,11 +1,11 @@
 import Phaser from 'phaser';
 import './styles.css';
 import { GameAudio, type AudioCue } from './game/audio';
-import type { RegionId } from './game/content';
-import { createGame, getRegion, move, tileKind, type TempleState } from './game/model';
+import { CAMPAIGN_REGION_GOAL, type RegionId } from './game/content';
+import { createGame, getRegion, move, movesUntilSurge, tileKind, type TempleState } from './game/model';
 import { actionFromKeyboard, actionFromMoveControl, type GameAction } from './game/input';
 import { readRecord, recordWin } from './game/records';
-import { clearExpedition, loadExpedition, saveExpedition } from './game/storage';
+import { clearExpedition, loadCheckpoint, loadExpedition, saveCheckpoint, saveExpedition } from './game/storage';
 
 const TILE = 64;
 let state: TempleState = createGame();
@@ -47,7 +47,8 @@ function getStorage(): Storage | null {
   try { return globalThis.localStorage ?? null; } catch { return null; }
 }
 
-const audio = new GameAudio(getStorage());
+const storage = getStorage();
+const audio = new GameAudio(storage);
 
 function syncAudioButton() {
   const enabled = audio.isEnabled();
@@ -56,7 +57,7 @@ function syncAudioButton() {
 }
 
 function syncRecord() {
-  const record = readRecord(getStorage());
+  const record = readRecord(storage);
   bestMoves.textContent = record.bestMoves > 0 ? `${record.bestMoves} moves` : '—';
   winCount.textContent = `${record.wins} completed expedition${record.wins === 1 ? '' : 's'}`;
 }
@@ -70,16 +71,16 @@ function syncResult() {
   }
   const won = state.status === 'won';
   resultEyebrow.textContent = won ? 'Expedition Complete' : 'Expedition Lost';
-  resultTitle.textContent = won ? 'Living Seed Vault Recovered' : 'The Temple Claimed This Run';
-  const checkpointAvailable = !won && Boolean(loadExpedition(getStorage()));
+  resultTitle.textContent = won ? 'Living Seed Reliquary Recovered' : 'The Temple Claimed This Run';
+  const checkpointAvailable = !won && Boolean(loadCheckpoint(storage));
   resultText.textContent = won
     ? 'Every relic seed is secure. Your route is recorded—return and try to escape in fewer moves.'
     : checkpointAvailable
-      ? 'Return to the last safe checkpoint or start a fresh expedition.'
+      ? 'Return to the last sanctuary or cleared-region entrance, or start a fresh expedition.'
       : 'No safe checkpoint is available. Start a fresh expedition and choose another route.';
   resultMoves.textContent = String(state.turn);
   resultRelics.textContent = `${state.campaignCollected} / ${state.campaignRelicGoal}`;
-  resultRegions.textContent = `${state.regionsCleared.length} / 3`;
+  resultRegions.textContent = `${state.regionsCleared.length} / ${CAMPAIGN_REGION_GOAL}`;
   continueResultButton.hidden = !checkpointAvailable;
   playAgainButton.textContent = won ? 'Start New Expedition' : 'Restart Expedition';
 }
@@ -91,7 +92,7 @@ function syncHud() {
   wards.textContent = String(state.wards);
   tools.textContent = String(state.tools);
   guardians.textContent = String(state.guardians.length);
-  regions.textContent = `${state.regionsCleared.length} / 3`;
+  regions.textContent = `${state.regionsCleared.length} / ${CAMPAIGN_REGION_GOAL}`;
   checkpoints.textContent = `${state.visitedCheckpoints.length} / ${state.checkpoints.length}`;
   danger.textContent = `${state.danger} / 10`;
   turns.textContent = String(state.turn);
@@ -99,11 +100,12 @@ function syncHud() {
   regionRelics.textContent = `${state.collected} / ${state.relicGoal}`;
   regionTitle.textContent = region.name;
   regionDescription.textContent = region.subtitle;
-  pressureHint.textContent = region.pressureLabel;
+  const surgeMoves = movesUntilSurge(state);
+  pressureHint.textContent = `${region.pressureLabel} · next surge in ${surgeMoves} move${surgeMoves === 1 ? '' : 's'}`;
   message.textContent = state.message;
   restartButton.textContent = state.status === 'playing' ? 'Restart' : 'Play Again';
   saveButton.disabled = state.status !== 'playing';
-  continueButton.disabled = !loadExpedition(getStorage());
+  continueButton.disabled = !loadExpedition(storage);
   document.querySelectorAll<HTMLElement>('[data-region-step]').forEach((step) => {
     const id = step.dataset.regionStep as RegionId | undefined;
     if (!id) return;
@@ -121,41 +123,61 @@ function renderState() {
 
 function persistState(label = 'Expedition saved') {
   if (state.status !== 'playing') return;
-  const saved = saveExpedition(getStorage(), state);
+  const saved = saveExpedition(storage, state);
   saveStatus.textContent = saved ? label : 'Save unavailable in this browser';
   continueButton.disabled = !saved;
 }
 
+function persistCheckpoint(label: string) {
+  if (state.status !== 'playing') return;
+  const saved = saveCheckpoint(storage, state);
+  if (saved) saveStatus.textContent = label;
+}
+
 function restartGame() {
   state = createGame();
-  clearExpedition(getStorage());
-  saveStatus.textContent = 'Fresh expedition';
+  clearExpedition(storage);
+  saveCheckpoint(storage, state);
+  saveStatus.textContent = 'Fresh expedition · entrance checkpoint secured';
   renderState();
 }
 
 function continueGame() {
-  const loaded = loadExpedition(getStorage());
+  const loaded = loadExpedition(storage);
   if (!loaded) {
     saveStatus.textContent = 'No saved expedition found';
     continueButton.disabled = true;
+    return;
+  }
+  state = loaded;
+  state.message = 'Latest autosave restored.';
+  saveStatus.textContent = 'Autosave restored';
+  renderState();
+}
+
+function continueFromCheckpoint() {
+  const loaded = loadCheckpoint(storage);
+  if (!loaded) {
+    saveStatus.textContent = 'No sanctuary checkpoint found';
     continueResultButton.hidden = true;
     return;
   }
   state = loaded;
-  state.message = 'Saved expedition restored.';
-  saveStatus.textContent = 'Save restored';
+  state.message = 'Safe checkpoint restored. Choose a new route from here.';
+  saveExpedition(storage, state);
+  saveStatus.textContent = 'Safe checkpoint restored';
   renderState();
 }
 
 function finishRun(previousStatus: TempleState['status']) {
   if (previousStatus !== 'playing' || state.status === 'playing') return;
   if (state.status === 'won') {
-    recordWin(getStorage(), state.turn);
-    clearExpedition(getStorage());
+    recordWin(storage, state.turn);
+    clearExpedition(storage);
     saveStatus.textContent = 'Campaign complete';
     audio.play('win');
   } else {
-    saveStatus.textContent = 'Last safe checkpoint preserved';
+    saveStatus.textContent = loadCheckpoint(storage) ? 'Safe checkpoint preserved' : 'No safe checkpoint available';
     audio.play('lose');
   }
 }
@@ -178,10 +200,15 @@ function dispatch(action: GameAction | null) {
   const previous = structuredClone(state) as TempleState;
   const previousTurn = state.turn;
   const previousRegion = state.regionId;
+  const previousCheckpointCount = state.visitedCheckpoints.length;
   const previousStatus = state.status;
   state = move(state, action.direction);
   if (state.turn !== previousTurn) audio.play(cueForMove(previous, state));
-  if (state.turn !== previousTurn && state.status === 'playing') persistState(previousRegion !== state.regionId ? 'Region checkpoint saved' : 'Checkpoint saved');
+  if (state.turn !== previousTurn && state.status === 'playing') {
+    persistState('Autosaved');
+    if (previousRegion !== state.regionId) persistCheckpoint('Region entrance checkpoint secured');
+    else if (state.visitedCheckpoints.length > previousCheckpointCount) persistCheckpoint('Sanctuary checkpoint secured');
+  }
   finishRun(previousStatus);
   renderState();
 }
@@ -232,6 +259,12 @@ class TempleScene extends Phaser.Scene {
     } else if (regionId === 'vault_heart' && (x + y) % 3 === 0) {
       this.graphics.lineStyle(2, 0xe0b95e, 0.2).strokeRect(cx - 7, cy - 7, 14, 14);
       this.graphics.fillStyle(0xf0d57f, 0.24).fillCircle(cx, cy, 3);
+    } else if (regionId === 'glasshouse_ruins' && (x * 2 + y) % 4 === 0) {
+      this.graphics.lineStyle(2, 0xa8dfad, 0.24).beginPath().moveTo(cx - 18, cy + 18).lineTo(cx, cy - 18).lineTo(cx + 18, cy + 18).strokePath();
+      this.graphics.fillStyle(0x7dbb86, 0.22).fillEllipse(cx, cy + 8, 24, 8);
+    } else if (regionId === 'seed_throne' && (x + y * 3) % 4 === 0) {
+      this.graphics.lineStyle(2, 0xf0cf72, 0.24).strokeCircle(cx, cy, 11).strokeCircle(cx, cy, 18);
+      this.graphics.fillStyle(0xf4dea0, 0.2).fillCircle(cx, cy, 4);
     }
   }
 
@@ -292,7 +325,7 @@ class TempleScene extends Phaser.Scene {
       }
     }
     this.positionPlayer(next);
-    this.statusText.setText(next.status === 'won' ? 'LIVING SEED VAULT RECOVERED' : next.status === 'lost' ? 'EXPEDITION LOST' : `${region.name.toUpperCase()} · RELICS ${next.collected}/${next.relicGoal} · KITS ${next.tools}`);
+    this.statusText.setText(next.status === 'won' ? 'LIVING SEED RELIQUARY RECOVERED' : next.status === 'lost' ? 'EXPEDITION LOST' : `${region.name.toUpperCase()} · RELICS ${next.collected}/${next.relicGoal} · SURGE ${movesUntilSurge(next)} · KITS ${next.tools}`);
   }
 }
 
@@ -310,9 +343,10 @@ new Phaser.Game({
 audioButton.addEventListener('click', () => { audio.toggle(); syncAudioButton(); });
 restartButton.addEventListener('click', restartGame);
 playAgainButton.addEventListener('click', restartGame);
-continueResultButton.addEventListener('click', continueGame);
+continueResultButton.addEventListener('click', continueFromCheckpoint);
 saveButton.addEventListener('click', () => persistState());
 continueButton.addEventListener('click', continueGame);
 document.querySelectorAll<HTMLButtonElement>('[data-move]').forEach((button) => button.addEventListener('click', () => dispatch(actionFromMoveControl(button.dataset.move))));
 
+if (!loadCheckpoint(storage) && !loadExpedition(storage)) saveCheckpoint(storage, state);
 syncHud();

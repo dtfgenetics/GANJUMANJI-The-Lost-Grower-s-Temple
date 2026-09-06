@@ -2,8 +2,10 @@ import { CAMPAIGN_RELIC_GOAL } from './content';
 import { createGame, type TempleState } from './model';
 
 export const SAVE_KEY = 'dtf-ganjumanji-expedition-v1';
+export const CHECKPOINT_KEY = 'dtf-ganjumanji-checkpoint-v1';
+export const SAVE_VERSION = 5 as const;
 
-export type SavedExpedition = { version: 4; savedAt: string; state: TempleState };
+export type SavedExpedition = { version: typeof SAVE_VERSION; savedAt: string; state: TempleState };
 
 type LegacyTempleState = Partial<TempleState> & {
   width: number; height: number; health: number; turn: number; player: TempleState['player'];
@@ -11,7 +13,7 @@ type LegacyTempleState = Partial<TempleState> & {
 };
 
 export function serializeExpedition(state: TempleState): string {
-  return JSON.stringify({ version: 4, savedAt: new Date().toISOString(), state: structuredClone(state) } satisfies SavedExpedition);
+  return JSON.stringify({ version: SAVE_VERSION, savedAt: new Date().toISOString(), state: structuredClone(state) } satisfies SavedExpedition);
 }
 
 function isBaseState(state: Partial<TempleState>): state is LegacyTempleState {
@@ -35,7 +37,7 @@ function migrateState(state: LegacyTempleState): TempleState {
     regionId: state.regionId ?? 'root_halls',
     regionTurn: typeof state.regionTurn === 'number' ? state.regionTurn : state.turn,
     campaignCollected,
-    campaignRelicGoal: typeof state.campaignRelicGoal === 'number' ? state.campaignRelicGoal : CAMPAIGN_RELIC_GOAL,
+    campaignRelicGoal: CAMPAIGN_RELIC_GOAL,
     regionsCleared: Array.isArray(state.regionsCleared) ? state.regionsCleared : []
   } as TempleState;
 }
@@ -44,21 +46,40 @@ export function parseExpedition(raw: string | null): TempleState | null {
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as { version?: number; state?: Partial<TempleState> };
-    if (![1, 2, 3, 4].includes(Number(parsed.version)) || !parsed.state || !isBaseState(parsed.state)) return null;
+    if (![1, 2, 3, 4, SAVE_VERSION].includes(Number(parsed.version)) || !parsed.state || !isBaseState(parsed.state)) return null;
     return structuredClone(migrateState(parsed.state));
   } catch { return null; }
 }
 
-export function saveExpedition(storage: Storage | null | undefined, state: TempleState): boolean {
+function writeState(storage: Storage | null | undefined, key: string, state: TempleState): boolean {
   if (!storage) return false;
-  try { storage.setItem(SAVE_KEY, serializeExpedition(state)); return true; } catch { return false; }
+  try { storage.setItem(key, serializeExpedition(state)); return true; } catch { return false; }
+}
+
+function readState(storage: Storage | null | undefined, key: string): TempleState | null {
+  if (!storage) return null;
+  try { return parseExpedition(storage.getItem(key)); } catch { return null; }
+}
+
+export function saveExpedition(storage: Storage | null | undefined, state: TempleState): boolean {
+  return writeState(storage, SAVE_KEY, state);
 }
 
 export function loadExpedition(storage: Storage | null | undefined): TempleState | null {
-  if (!storage) return null;
-  try { return parseExpedition(storage.getItem(SAVE_KEY)); } catch { return null; }
+  return readState(storage, SAVE_KEY);
+}
+
+export function saveCheckpoint(storage: Storage | null | undefined, state: TempleState): boolean {
+  return writeState(storage, CHECKPOINT_KEY, state);
+}
+
+export function loadCheckpoint(storage: Storage | null | undefined): TempleState | null {
+  return readState(storage, CHECKPOINT_KEY);
 }
 
 export function clearExpedition(storage: Storage | null | undefined): void {
-  try { storage?.removeItem(SAVE_KEY); } catch {}
+  try {
+    storage?.removeItem(SAVE_KEY);
+    storage?.removeItem(CHECKPOINT_KEY);
+  } catch {}
 }

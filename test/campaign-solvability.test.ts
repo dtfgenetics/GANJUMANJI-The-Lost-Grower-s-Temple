@@ -113,7 +113,7 @@ function heuristic(state: TempleState): number {
   return estimate;
 }
 
-function findWinningDepth(maxDepth = 219): { depth: number; explored: number } | null {
+function findWinningDepth(maxDepth = 419): { depth: number; explored: number } | null {
   const start = createGame();
   const open = new MinHeap();
   open.push({ state: start, depth: 0, score: heuristic(start) });
@@ -140,11 +140,11 @@ function findWinningDepth(maxDepth = 219): { depth: number; explored: number } |
 }
 
 describe('Ganjumanji campaign solvability', () => {
-  it('keeps at least one survivable route through every region and the final vault', () => {
+  it('keeps at least one survivable route through all five regions and the final reliquary', () => {
     const result = findWinningDepth();
     expect(result, 'campaign balance must preserve a complete survivable route').not.toBeNull();
     expect(result!.depth).toBeGreaterThan(0);
-    expect(result!.depth).toBeLessThan(220);
+    expect(result!.depth).toBeLessThan(420);
     expect(result!.explored).toBeGreaterThan(0);
-  }, 20_000);
+  }, 45_000);
 });
