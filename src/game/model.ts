@@ -34,6 +34,12 @@ export function createGame(): TempleState {
     status: 'playing', message: 'Recover the Root Hall relic seeds and reach the sealed passage.' };
 }
 
+export function movesUntilSurge(state: TempleState): number {
+  const every = REGIONS[state.regionId].surgeEvery;
+  const remainder = state.regionTurn % every;
+  return remainder === 0 ? every : every - remainder;
+}
+
 function destinationFor(player: Point, direction: Direction): Point {
   const delta: Record<Direction, Point> = { up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 } };
   return { x: player.x + delta[direction].x, y: player.y + delta[direction].y };
@@ -49,13 +55,18 @@ function enterRegion(state: TempleState, regionId: RegionId): void {
   const nextRegion = REGIONS[regionId];
   const carriedTools = state.tools;
   const carriedWards = state.wards;
-  const recoveredHealth = Math.min(state.maxHealth, state.health + 1);
+  const earnedCanopyHeart = state.regionsCleared.length >= 3 && state.maxHealth < 4;
+  const nextMaxHealth = earnedCanopyHeart ? 4 : state.maxHealth;
+  const recoveredHealth = Math.min(nextMaxHealth, state.health + 1);
   Object.assign(state, regionState(regionId));
   state.tools = carriedTools;
   state.wards = carriedWards;
+  state.maxHealth = nextMaxHealth;
   state.health = recoveredHealth;
   state.regionId = regionId;
-  state.message = `${nextRegion.name}: ${nextRegion.subtitle} Safe passage restores 1 health. ${nextRegion.pressureLabel}.`;
+  state.message = earnedCanopyHeart
+    ? `${nextRegion.name}: ${nextRegion.subtitle} The restored Vault Heart raises max health to 4 and safe passage restores 1 health. ${nextRegion.pressureLabel}.`
+    : `${nextRegion.name}: ${nextRegion.subtitle} Safe passage restores 1 health. ${nextRegion.pressureLabel}.`;
 }
 
 function clearCurrentRegion(state: TempleState): void {
@@ -63,7 +74,7 @@ function clearCurrentRegion(state: TempleState): void {
   const definition = REGIONS[state.regionId];
   if (definition.nextRegion) { enterRegion(state, definition.nextRegion); return; }
   state.status = 'won';
-  state.message = `Living Seed Vault recovered in ${state.turn} moves. All ${state.campaignRelicGoal} relic seeds are secure.`;
+  state.message = `Living Seed Reliquary recovered in ${state.turn} moves. All ${state.campaignRelicGoal} relic seeds are secure.`;
 }
 
 export function move(state: TempleState, direction: Direction): TempleState {
@@ -109,7 +120,7 @@ export function move(state: TempleState, direction: Direction): TempleState {
 
   if (next.regionTurn > 0 && next.regionTurn % region.surgeEvery === 0 && next.status === 'playing') takeDamage(next, `${region.name} surges.`);
 
-  if (next.health <= 0) { next.status = 'lost'; next.message = 'The temple claimed the expedition. Restart and try another route.'; return next; }
+  if (next.health <= 0) { next.status = 'lost'; next.message = 'The temple claimed the expedition. Resume from the last sanctuary or region entrance, or restart and try another route.'; return next; }
 
   if (samePoint(next.player, next.exit)) {
     if (next.collected >= next.relicGoal) clearCurrentRegion(next);
