@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('renders low-chrome campaign HUD, journal drawer, saves, and restart flow', async ({ page }, testInfo) => {
+test('renders low-chrome five-region HUD, journal drawer, autosave, and restart flow', async ({ page }, testInfo) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
@@ -10,12 +10,12 @@ test('renders low-chrome campaign HUD, journal drawer, saves, and restart flow',
   await expect(page.locator('#game canvas')).toBeVisible();
   await expect(page.locator('#regionName')).toHaveText('The Root Halls');
   await expect(page.locator('#health')).toHaveText('3 / 3');
-  await expect(page.locator('#relics')).toHaveText('0 / 6');
+  await expect(page.locator('#relics')).toHaveText('0 / 10');
   await expect(page.locator('#regionRelics')).toHaveText('0 / 3');
   await expect(page.locator('#wards')).toHaveText('0');
   await expect(page.locator('#tools')).toHaveText('0');
   await expect(page.locator('#guardians')).toHaveText('1');
-  await expect(page.locator('#regions')).toHaveText('0 / 3');
+  await expect(page.locator('#regions')).toHaveText('0 / 5');
   await expect(page.locator('#checkpoints')).toHaveText('0 / 2');
   await expect(page.locator('#turns')).toHaveText('0');
   await expect(page.getByRole('button', { name: 'Continue', exact: true })).toBeDisabled();
@@ -26,10 +26,12 @@ test('renders low-chrome campaign HUD, journal drawer, saves, and restart flow',
   await journalButton.click();
   await expect(journal).toHaveAttribute('aria-hidden', 'false');
   await expect(journalButton).toHaveAttribute('aria-expanded', 'true');
-  await expect(page.locator('#pressureHint')).toContainText('surge every 9 moves');
+  await expect(page.locator('#pressureHint')).toContainText('next surge in 9 moves');
   await expect(page.getByText(/expedition kits automatically neutralize/i)).toBeVisible();
-  await expect(page.getByText(/cleared passages restore 1 health/i)).toBeVisible();
+  await expect(page.getByText(/successful moves update the normal autosave/i)).toBeVisible();
   await expect(page.locator('[data-region-step="root_halls"]')).toHaveAttribute('data-state', 'current');
+  await expect(page.locator('[data-region-step="glasshouse_ruins"]')).toHaveAttribute('data-state', 'locked');
+  await expect(page.locator('[data-region-step="seed_throne"]')).toHaveAttribute('data-state', 'locked');
   await expect(page.getByRole('button', { name: 'Close journal', exact: true }).first()).toBeFocused();
   await page.keyboard.press('ArrowRight');
   await expect(page.locator('#turns')).toHaveText('0');
@@ -47,13 +49,14 @@ test('renders low-chrome campaign HUD, journal drawer, saves, and restart flow',
 
   await page.keyboard.press('ArrowRight');
   await expect(page.locator('#turns')).toHaveText('1');
-  await expect(page.locator('#saveStatus')).toHaveText('Checkpoint saved');
+  await expect(page.locator('#saveStatus')).toHaveText('Autosaved');
+  await expect(page.locator('#pressureHint')).toContainText('next surge in 8 moves');
   await expect(page.getByRole('button', { name: 'Continue', exact: true })).toBeEnabled();
   await page.keyboard.press('ArrowRight');
   await expect(page.locator('#turns')).toHaveText('2');
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await expect(page.locator('#turns')).toHaveText('2');
-  await expect(page.locator('#message')).toHaveText('Saved expedition restored.');
+  await expect(page.locator('#message')).toHaveText('Latest autosave restored.');
 
   await page.screenshot({ path: testInfo.outputPath('ganjumanji-desktop.png'), fullPage: true });
   await page.getByRole('button', { name: 'Save', exact: true }).click();
@@ -62,11 +65,12 @@ test('renders low-chrome campaign HUD, journal drawer, saves, and restart flow',
   await expect(page.locator('#turns')).toHaveText('0');
   await expect(page.locator('#tools')).toHaveText('0');
   await expect(page.locator('#guardians')).toHaveText('1');
+  await expect(page.locator('#saveStatus')).toHaveText('Fresh expedition · entrance checkpoint secured');
   await expect(page.getByRole('button', { name: 'Continue', exact: true })).toBeDisabled();
   expect(errors).toEqual([]);
 });
 
-test('loss result can restore the last automatic checkpoint', async ({ page }, testInfo) => {
+test('loss result restores the last safe checkpoint instead of the pre-death autosave', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === 'mobile-chrome', 'Checkpoint-loss sequence only needs the desktop project.');
   await page.goto('/games/ganjumanji/');
 
@@ -78,12 +82,14 @@ test('loss result can restore the last automatic checkpoint', async ({ page }, t
 
   await expect(page.locator('#resultModal')).toBeVisible();
   await expect(page.locator('#resultTitle')).toHaveText('The Temple Claimed This Run');
-  await expect(page.getByRole('button', { name: 'Continue from Checkpoint', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Continue from Checkpoint', exact: true }).click();
+  const safeContinue = page.getByRole('button', { name: 'Continue from Safe Checkpoint', exact: true });
+  await expect(safeContinue).toBeVisible();
+  await safeContinue.click();
   await expect(page.locator('#resultModal')).toBeHidden();
-  await expect(page.locator('#turns')).toHaveText('17');
-  await expect(page.locator('#health')).toHaveText('1 / 3');
-  await expect(page.locator('#saveStatus')).toHaveText('Save restored');
+  await expect(page.locator('#turns')).toHaveText('0');
+  await expect(page.locator('#health')).toHaveText('3 / 3');
+  await expect(page.locator('#saveStatus')).toHaveText('Safe checkpoint restored');
+  await expect(page.locator('#message')).toHaveText('Safe checkpoint restored. Choose a new route from here.');
 });
 
 test('touch movement and journal stay usable on mobile', async ({ page }, testInfo) => {
@@ -101,6 +107,6 @@ test('touch movement and journal stay usable on mobile', async ({ page }, testIn
   await expect(moveRight).toBeEnabled();
   await moveRight.click();
   await expect(page.locator('#turns')).toHaveText('1');
-  await expect(page.locator('#saveStatus')).toHaveText('Checkpoint saved');
+  await expect(page.locator('#saveStatus')).toHaveText('Autosaved');
   await page.screenshot({ path: testInfo.outputPath('ganjumanji-mobile.png'), fullPage: true });
 });
