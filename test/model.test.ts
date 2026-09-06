@@ -6,7 +6,7 @@ describe('Ganjumanji temple model', () => {
     const state = createGame();
     expect(state.status).toBe('playing'); expect(state.regionId).toBe('root_halls');
     expect(state.health).toBe(3); expect(state.maxHealth).toBe(3); expect(state.wards).toBe(0); expect(state.tools).toBe(0);
-    expect(state.checkpoints).toHaveLength(2); expect(state.relicGoal).toBe(3); expect(state.campaignRelicGoal).toBe(6);
+    expect(state.checkpoints).toHaveLength(2); expect(state.relicGoal).toBe(3); expect(state.campaignRelicGoal).toBe(10);
     expect(state.relics).toHaveLength(3); expect(state.toolCaches).toHaveLength(1); expect(state.guardians).toHaveLength(1);
     expect(state.turn).toBe(0); expect(state.regionTurn).toBe(0);
   });
@@ -78,12 +78,18 @@ describe('Ganjumanji temple model', () => {
     expect(transitioned.health).toBe(2); expect(transitioned.message).toMatch(/restores 1 health/i); expect(transitioned.message).toMatch(/surge every 7 moves/i);
   });
 
-  it('wins only after the final Vault Heart relic and exit are secured', () => {
-    let state = createGame(); state.player = { x: 9, y: 2 }; state.collected = 3; state.campaignCollected = 3; state.relics = []; state = move(state, 'up');
+  it('wins only after all five regions and the Seed Throne relics are secured', () => {
+    let state = createGame();
+    state.player = { x: 9, y: 2 }; state.collected = 3; state.campaignCollected = 3; state.relics = []; state = move(state, 'up');
     state.player = { x: 9, y: 6 }; state.collected = 2; state.campaignCollected = 5; state.relics = []; state = move(state, 'down');
-    state.player = { x: 9, y: 2 }; state.collected = 1; state.campaignCollected = 6; state.relics = [];
+    state.player = { x: 9, y: 2 }; state.collected = 1; state.campaignCollected = 6; state.relics = []; state = move(state, 'up');
+    expect(state.regionId).toBe('glasshouse_ruins'); expect(state.maxHealth).toBe(4);
+    state.player = { x: 9, y: 6 }; state.collected = 2; state.campaignCollected = 8; state.relics = []; state = move(state, 'down');
+    expect(state.regionId).toBe('seed_throne');
+    state.player = { x: 9, y: 2 }; state.collected = 2; state.campaignCollected = 10; state.relics = [];
     const escaped = move(state, 'up'); expect(escaped.status).toBe('won');
-    expect(escaped.regionsCleared).toEqual(['root_halls', 'sunken_archive', 'vault_heart']); expect(escaped.message).toMatch(/living seed vault recovered/i);
+    expect(escaped.regionsCleared).toEqual(['root_halls', 'sunken_archive', 'vault_heart', 'glasshouse_ruins', 'seed_throne']);
+    expect(escaped.message).toMatch(/living seed vault recovered/i);
   });
 
   it('can lose when temple pressure depletes health', () => {
