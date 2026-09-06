@@ -89,7 +89,7 @@ describe('Ganjumanji temple model', () => {
     state.player = { x: 9, y: 2 }; state.collected = 2; state.campaignCollected = 10; state.relics = [];
     const escaped = move(state, 'up'); expect(escaped.status).toBe('won');
     expect(escaped.regionsCleared).toEqual(['root_halls', 'sunken_archive', 'vault_heart', 'glasshouse_ruins', 'seed_throne']);
-    expect(escaped.message).toMatch(/living seed vault recovered/i);
+    expect(escaped.message).toMatch(/living seed reliquary recovered/i);
   });
 
   it('can lose when temple pressure depletes health', () => {
