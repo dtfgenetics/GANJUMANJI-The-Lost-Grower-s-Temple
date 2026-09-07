@@ -2,7 +2,11 @@ name: Ganjumanji 3D CI
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - 'feat/**'
+      - 'fix/**'
+      - 'reconcile/**'
   pull_request:
     branches: [main]
 
