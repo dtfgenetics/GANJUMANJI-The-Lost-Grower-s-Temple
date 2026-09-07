@@ -11,15 +11,18 @@ if (!root || !sceneMount) throw new Error('Ganjumanji game shell is incomplete.'
 let state: GameState = createInitialState();
 const input = new InputController(root);
 const hud = new TempleHud(root, resetRun);
-let world: TempleWorldRenderer;
+let world: TempleWorldRenderer | null = null;
 
 try {
   world = new TempleWorldRenderer(sceneMount, (message) => hud.announce(message));
+  root.dataset.renderState = 'webgl';
 } catch (error) {
   const message = error instanceof Error ? error.message : String(error);
+  root.dataset.renderState = 'fallback';
+  root.dataset.renderError = message;
   sceneMount.innerHTML = `<div class="webgl-fallback"><strong>3D scene unavailable.</strong><span>${escapeHtml(message)}</span></div>`;
-  hud.announce('This browser could not start the 3D Temple Atrium. Try a current browser with WebGL enabled.');
-  throw error;
+  hud.announce('The 3D Temple Atrium could not start, but controls and game-state simulation remain available. Try a current browser with WebGL enabled for the full scene.');
+  console.error('Ganjumanji 3D renderer failed to initialize:', error);
 }
 
 hud.update(state, []);
@@ -52,7 +55,7 @@ function frame(now: number) {
   }
 
   hud.update(state, events);
-  world.update(state, frameDelta);
+  world?.update(state, frameDelta);
   frameId = requestAnimationFrame(frame);
 }
 
@@ -61,7 +64,7 @@ frameId = requestAnimationFrame(frame);
 window.addEventListener('pagehide', () => {
   cancelAnimationFrame(frameId);
   input.dispose();
-  world.dispose();
+  world?.dispose();
 }, { once: true });
 
 function escapeHtml(value: string) {
