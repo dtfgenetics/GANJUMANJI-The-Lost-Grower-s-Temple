@@ -2,15 +2,22 @@ import type { GameEvent, GameState } from '../simulation/state';
 import { TEMPLE_ATRIUM } from '../simulation/world-data';
 
 export class TempleHud {
-  private readonly objective = this.requireElement<HTMLElement>('objective');
-  private readonly sigilCount = this.requireElement<HTMLElement>('sigil-count');
-  private readonly resolveCount = this.requireElement<HTMLElement>('resolve-count');
-  private readonly prompt = this.requireElement<HTMLElement>('prompt');
-  private readonly winDialog = this.requireElement<HTMLDialogElement>('win-dialog');
-  private readonly playAgain = this.requireElement<HTMLButtonElement>('play-again');
+  private readonly objective: HTMLElement;
+  private readonly sigilCount: HTMLElement;
+  private readonly resolveCount: HTMLElement;
+  private readonly prompt: HTMLElement;
+  private readonly winDialog: HTMLDialogElement;
+  private readonly playAgain: HTMLButtonElement;
   private lastMessage = '';
 
   constructor(private readonly root: HTMLElement, onRestart: () => void) {
+    this.objective = this.requireElement<HTMLElement>('objective');
+    this.sigilCount = this.requireElement<HTMLElement>('sigil-count');
+    this.resolveCount = this.requireElement<HTMLElement>('resolve-count');
+    this.prompt = this.requireElement<HTMLElement>('prompt');
+    this.winDialog = this.requireElement<HTMLDialogElement>('win-dialog');
+    this.playAgain = this.requireElement<HTMLButtonElement>('play-again');
+
     this.playAgain.addEventListener('click', () => {
       this.winDialog.close();
       onRestart();
