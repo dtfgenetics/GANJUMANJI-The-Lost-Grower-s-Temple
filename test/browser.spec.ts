@@ -15,12 +15,15 @@ test('Temple Atrium boots into a real playable 3D surface', async ({ page }) => 
 
   await page.goto('./');
   const root = page.locator('#app');
-  await expect(root).toHaveAttribute('data-render-state', /webgl|fallback/);
+  await page.waitForTimeout(800);
   const renderState = await root.getAttribute('data-render-state');
+  if (!renderState) {
+    throw new Error(`Ganjumanji bootstrap did not initialize: ${errors.join(' | ') || 'no browser error captured'}`);
+  }
   if (renderState === 'fallback') {
     const renderError = await root.getAttribute('data-render-error');
     const fallbackText = await page.locator('.webgl-fallback').textContent();
-    throw new Error(`Ganjumanji WebGL renderer failed to initialize: ${renderError || fallbackText || 'unknown renderer error'}`);
+    throw new Error(`Ganjumanji WebGL renderer failed to initialize: ${renderError || fallbackText || errors.join(' | ') || 'unknown renderer error'}`);
   }
 
   await expect(page.locator('#game-canvas')).toBeVisible();
