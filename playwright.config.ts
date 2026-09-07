@@ -11,6 +11,13 @@ export default defineConfig({
   use: {
     baseURL: 'http://127.0.0.1:4173/games/ganjumanji/',
     browserName: 'chromium',
+    launchOptions: {
+      args: [
+        '--enable-webgl',
+        '--ignore-gpu-blocklist',
+        '--use-gl=swiftshader',
+      ],
+    },
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
