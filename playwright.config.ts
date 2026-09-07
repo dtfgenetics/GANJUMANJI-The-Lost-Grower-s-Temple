@@ -15,7 +15,8 @@ export default defineConfig({
       args: [
         '--enable-webgl',
         '--ignore-gpu-blocklist',
-        '--use-gl=swiftshader',
+        '--enable-unsafe-swiftshader',
+        '--use-angle=swiftshader',
       ],
     },
     trace: 'retain-on-failure',
