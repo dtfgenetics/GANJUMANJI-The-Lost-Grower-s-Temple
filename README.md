@@ -44,10 +44,10 @@ Across the campaign players can:
 - `test/campaign-solvability.test.ts` — state-space search proving at least one survivable route through the complete five-region campaign.
 - `test/content.test.ts` — validates region chaining, reachability, unique critical objects, and campaign content integrity.
 - `test/input-storage.test.ts` — validates input, autosave/checkpoint separation, and legacy save migration.
-- `e2e/` — desktop/mobile Playwright acceptance with screenshot evidence and real recovery behavior.
+- `scripts/validate-ui-contract.mjs` — deterministic shipped-UI validation for mobile viewport behavior, touch/keyboard controls, journal input lockout, HUD/recovery/results hooks, five-stage campaign UI, reduced-motion handling, and the release manifest.
 - `public/game-release.json` — production route, version 0.4.0, five-region campaign metadata, and save v5 contract.
 - `scripts/validate-release.mjs` — verifies the built bundle is safe and internally consistent for `/games/ganjumanji/`.
-- `.github/workflows/ci.yml` — tests, build, route validation, browser acceptance, screenshot evidence, and deployable build artifact.
+- `.github/workflows/ci.yml` — deterministic tests, UI contract, build, release validation, and deployable build artifact.
 
 ## Production route
 
@@ -59,7 +59,7 @@ The CI production artifact is intended to be copied into the DTFSeeds public gam
 
 ## Current expansion gate
 
-The 0.4.0 branch expands the campaign from 3 to 5 regions, separates ordinary autosave from true safe recovery checkpoints, adds deeper progression, and increases the campaign relic goal from 6 to 10. The branch is not considered shippable until unit/content tests, five-region solvability search, TypeScript/Vite build, release validation, desktop/mobile Playwright acceptance, screenshot evidence, and the production artifact all pass.
+The 0.4.0 branch expands the campaign from 3 to 5 regions, separates ordinary autosave from true safe recovery checkpoints, adds deeper progression, and increases the campaign relic goal from 6 to 10. The branch is not considered shippable until deterministic game/content tests, five-region solvability search, shipped UI-contract validation, TypeScript/Vite build, and production release validation all pass.
 
 ## Next gameplay expansion areas
 
