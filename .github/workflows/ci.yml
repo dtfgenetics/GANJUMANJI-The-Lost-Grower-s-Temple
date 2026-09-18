@@ -16,14 +16,14 @@ concurrency:
 
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
-      - run: npm install
+      - run: npm ci --no-audit --no-fund
       - name: Run deterministic game and campaign tests
         run: npm test
       - name: Validate shipped mobile/UI contract
@@ -33,7 +33,7 @@ jobs:
       - name: Validate production release contract
         run: npm run validate:release
       - name: Upload production build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ganjumanji-production-build
           path: dist/
