@@ -25,12 +25,15 @@ assert.match(main, /movesUntilSurge\(state\)/, 'danger HUD must retain exact sur
 assert.match(main, /prefers-reduced-motion: reduce/, 'renderer must respect reduced-motion preferences');
 
 assert.match(styles, /\.mobile-controls button\{min-width:68px;min-height:52px/, 'touch movement controls must stay comfortably above 44px');
+assert.match(styles, /\.topbar button,\.mobile-controls button,\.result-card button,\.guide button\{min-height:44px;touch-action:manipulation/, 'all primary controls must retain a 44px touch target');
+assert.match(styles, /\.guide-header button\{width:44px;height:44px/, 'journal close control must retain a 44px square hit target');
 assert.match(styles, /@media\(max-width:860px\)[\s\S]*\.mobile-controls\{display:block\}/, 'touch controls must become visible on compact layouts');
 assert.match(styles, /@media\(prefers-reduced-motion:reduce\)/, 'CSS must retain reduced-motion handling');
+assert.match(styles, /@media\(forced-colors:active\)/, 'CSS must retain forced-colors support');
 assert.match(styles, /#game canvas\{display:block;width:100%!important;height:100%!important\}/, 'canvas must remain responsive inside the game panel');
 
 assert.equal(release.route, '/games/ganjumanji/');
-assert.equal(release.status, 'release-candidate');
+assert.equal(release.status, 'production-candidate');
 assert.equal(release.campaign?.regions, 5);
 assert.equal(release.campaign?.relicSeeds, 10);
 assert.equal(release.campaign?.saveVersion, 5);
