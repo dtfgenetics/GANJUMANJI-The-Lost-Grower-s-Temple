@@ -3,8 +3,8 @@
   "title": "Ganjumanji: The Lost Grower's Temple",
   "route": "/games/ganjumanji/",
   "runtime": "phaser-vite-typescript",
-  "status": "release-candidate",
-  "version": "0.4.0",
+  "status": "production-candidate",
+  "version": "0.4.1",
   "players": "1",
   "input": ["keyboard", "touch"],
   "campaign": {
