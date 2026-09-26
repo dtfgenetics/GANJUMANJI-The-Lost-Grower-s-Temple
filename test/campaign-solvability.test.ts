@@ -3,6 +3,7 @@ import { REGIONS, type RegionId } from '../src/game/content';
 import { createGame, move, type Direction, type Point, type TempleState } from '../src/game/model';
 
 const DIRECTIONS: Direction[] = ['up', 'down', 'left', 'right'];
+const HEURISTIC_WEIGHT = 4;
 const pointKey = (point: Point) => `${point.x},${point.y}`;
 const listKey = (points: Point[]) => points.map(pointKey).sort().join('|');
 const manhattan = (a: Point, b: Point) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
@@ -132,7 +133,7 @@ function findWinningDepth(maxDepth = 419): { depth: number; explored: number } |
       const depth = current.depth + 1;
       if (next.status === 'won') return { depth, explored };
       if (next.status !== 'playing' || !admit(frontiers, next, depth)) continue;
-      open.push({ state: next, depth, score: depth + heuristic(next) });
+      open.push({ state: next, depth, score: depth + HEURISTIC_WEIGHT * heuristic(next) });
     }
   }
 
