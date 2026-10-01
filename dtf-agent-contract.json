@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "repository": "dtfgenetics/GANJUMANJI-The-Lost-Grower-s-Temple",
+  "controlRepository": "dtfgenetics/Thc",
+  "defaultBranch": "main",
+  "canonicalDomains": [
+    "Ganjumanji game",
+    "Ganjumanji campaign",
+    "Ganjumanji browser runtime"
+  ],
+  "sourceRoots": [
+    "src/",
+    "test/",
+    "scripts/",
+    "public/",
+    "docs/",
+    "package.json",
+    "AGENTS.md",
+    "README.md"
+  ],
+  "protectedPaths": [
+    ".github/workflows/**",
+    ".env*",
+    "public/game-release.json"
+  ],
+  "verificationProfiles": {
+    "default": {
+      "commands": [
+        "npm test",
+        "npm run validate:ui",
+        "npm run build",
+        "npm run validate:release"
+      ],
+      "ciAuthoritative": true
+    },
+    "gameplay": {
+      "commands": [
+        "npm test"
+      ],
+      "ciAuthoritative": true
+    },
+    "release": {
+      "commands": [
+        "npm test",
+        "npm run validate:ui",
+        "npm run build",
+        "npm run validate:release"
+      ],
+      "ciAuthoritative": true
+    }
+  },
+  "production": {
+    "directMutation": false,
+    "integrationOwner": "dtfgenetics/Thc",
+    "route": "/games/ganjumanji/",
+    "notes": "Only exact validated release-candidate artifacts may advance the central DTFSeeds source pin; live verification remains required."
+  }
+}
